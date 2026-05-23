@@ -17,7 +17,11 @@
 				"/etc/init.d/daed start": [ "exec" ],
 				"/etc/init.d/daed stop": [ "exec" ],
 				"/etc/init.d/daed restart": [ "exec" ],
-				"/etc/init.d/daed reload": [ "exec" ]
+				"/etc/init.d/daed reload": [ "exec" ],
+				"/etc/init.d/daed enable": [ "exec" ],
+				"/etc/init.d/daed disable": [ "exec" ],
+				"/sbin/uci set daed.config.enabled=*": [ "exec" ],
+				"/sbin/uci commit daed": [ "exec" ]
 			},
 			"uci": [ "daed" ]
 		}
