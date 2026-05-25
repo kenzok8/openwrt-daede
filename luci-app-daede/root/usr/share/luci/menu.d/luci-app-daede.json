@@ -1,6 +1,6 @@
 {
-	"admin/services/daed": {
-		"title": "daed",
+	"admin/services/daede": {
+		"title": "daede",
 		"order": 20,
 		"action": {
 			"type": "firstchild"
@@ -9,28 +9,28 @@
 			"acl": [ "luci-app-daede" ]
 		}
 	},
-	"admin/services/daed/config": {
+	"admin/services/daede/config": {
 		"title": "Settings",
 		"order": 10,
 		"action": {
 			"type": "view",
-			"path": "daed/config"
+			"path": "daede/config"
 		}
 	},
-	"admin/services/daed/updates": {
+	"admin/services/daede/updates": {
 		"title": "Updates",
 		"order": 20,
 		"action": {
 			"type": "view",
-			"path": "daed/updates"
+			"path": "daede/updates"
 		}
 	},
-	"admin/services/daed/log": {
+	"admin/services/daede/log": {
 		"title": "Log",
 		"order": 30,
 		"action": {
 			"type": "view",
-			"path": "daed/log"
+			"path": "daede/log"
 		}
 	}
 }

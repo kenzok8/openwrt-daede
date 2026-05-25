@@ -5,7 +5,7 @@
 'require poll';
 'require ui';
 'require view';
-'require view.daed.backend as backend';
+'require view.daede.backend as backend';
 
 const MAX_LINES = 5000;
 

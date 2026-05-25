@@ -85,7 +85,7 @@ msgstr ""
 msgid "%s is already running. Stop %s before starting %s because both backends share the same eBPF/cgroup attachment."
 msgstr ""
 
-msgid "daed Settings"
+msgid "daede Settings"
 msgstr ""
 
 msgid "A modern dashboard for dae. Subscriptions, nodes, routing and DNS are managed in the daed WebUI."

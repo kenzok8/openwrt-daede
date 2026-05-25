@@ -12,23 +12,45 @@
 
 set -e
 
-# luci-app-daede owns the daed LuCI menu path. Remove stale files from the
-# official luci-app-daed package if it was installed before this package.
+# luci-app-daede owns its own LuCI menu and view path. Remove stale files from
+# the official luci-app-daed package and earlier daede builds that reused
+# /view/daed.
 rm -f /usr/share/luci/menu.d/luci-app-daed.json
 rm -f /usr/share/rpcd/acl.d/luci-app-daed.json
 rm -rf /usr/share/luci-app-daed
+rm -rf /www/luci-static/resources/view/daed
 rm -f /tmp/luci-indexcache.* 2>/dev/null || true
 rm -rf /tmp/luci-modulecache/* 2>/dev/null || true
 
-if ! uci -q get daed_luci.config >/dev/null 2>&1; then
-	touch /etc/config/daed_luci
-	uci -q set daed_luci.config=daed_luci
-	if [ -f /etc/init.d/daed ]; then
-		uci -q set daed_luci.config.active_backend='daed'
-	else
-		uci -q set daed_luci.config.active_backend='dae'
+if [ -f /etc/config/daed_luci ]; then
+	old_backend="$(uci -q get daed_luci.config.active_backend || true)"
+	if ! uci -q get daede.config >/dev/null 2>&1; then
+		touch /etc/config/daede
+		uci -q set daede.config=daede
+		case "$old_backend" in
+			dae|daed) uci -q set daede.config.active_backend="$old_backend" ;;
+		esac
+		uci -q commit daede
+	elif ! uci -q get daede.config.active_backend >/dev/null 2>&1; then
+		case "$old_backend" in
+			dae|daed)
+				uci -q set daede.config.active_backend="$old_backend"
+				uci -q commit daede
+				;;
+		esac
 	fi
-	uci -q commit daed_luci
+	rm -f /etc/config/daed_luci
+fi
+
+if ! uci -q get daede.config >/dev/null 2>&1; then
+	touch /etc/config/daede
+	uci -q set daede.config=daede
+	if [ -f /etc/init.d/daed ]; then
+		uci -q set daede.config.active_backend='daed'
+	else
+		uci -q set daede.config.active_backend='dae'
+	fi
+	uci -q commit daede
 fi
 
 INIT="/etc/init.d/daed"

@@ -8,7 +8,7 @@ PKG_NAME:=luci-app-daede
 PKG_VERSION:=1.1
 PKG_RELEASE:=1
 
-LUCI_TITLE:=LuCI app for dae/daed dashboard
+LUCI_TITLE:=LuCI app for daede dashboard
 LUCI_DEPENDS:=+PACKAGE_$(PKG_NAME)_dae:dae +PACKAGE_$(PKG_NAME)_daed:daed
 LUCI_PKGARCH:=all
 

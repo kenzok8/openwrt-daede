@@ -6,7 +6,7 @@
 'require uci';
 'require ui';
 'require view';
-'require view.daed.backend as backend';
+'require view.daede.backend as backend';
 
 const DATA_PATHS = {
 	geoip:   '/usr/share/v2ray/geoip.dat',

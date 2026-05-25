@@ -1,2 +1,2 @@
-config daed_luci 'config'
+config daede 'config'
 	option active_backend 'daed'

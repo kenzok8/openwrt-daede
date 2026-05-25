@@ -5,7 +5,7 @@
 			"file": {
 				"/etc/init.d/dae": [ "read" ],
 				"/etc/init.d/daed": [ "read" ],
-				"/etc/config/daed_luci": [ "read" ],
+				"/etc/config/daede": [ "read" ],
 				"/etc/dae/config.dae": [ "read" ],
 				"/etc/dae/example.dae": [ "read" ],
 				"/var/log/dae/dae.log": [ "read" ],
@@ -31,13 +31,13 @@
 			"ubus": {
 				"service": [ "list" ]
 			},
-			"uci": [ "dae", "daed", "daed_luci" ]
+			"uci": [ "dae", "daed", "daede" ]
 		},
 		"write": {
 			"file": {
 				"/etc/dae/config.dae": [ "write" ],
 				"/tmp/dae-validate.dae": [ "write" ],
-				"/etc/config/daed_luci": [ "write" ],
+				"/etc/config/daede": [ "write" ],
 				"/var/log/dae/dae.log": [ "write" ],
 				"/var/log/daed/daed.log": [ "write" ],
 				"/etc/init.d/dae start": [ "exec" ],
@@ -53,11 +53,11 @@
 				"/etc/init.d/daed disable": [ "exec" ],
 				"/sbin/uci set dae.config.enabled=*": [ "exec" ],
 				"/sbin/uci set daed.config.enabled=*": [ "exec" ],
-				"/sbin/uci set daed_luci.config=daed_luci": [ "exec" ],
-				"/sbin/uci set daed_luci.config.active_backend=*": [ "exec" ],
+				"/sbin/uci set daede.config=daede": [ "exec" ],
+				"/sbin/uci set daede.config.active_backend=*": [ "exec" ],
 				"/sbin/uci commit dae": [ "exec" ],
 				"/sbin/uci commit daed": [ "exec" ],
-				"/sbin/uci commit daed_luci": [ "exec" ],
+				"/sbin/uci commit daede": [ "exec" ],
 				"/sbin/ip netns del daens": [ "exec" ],
 				"/usr/share/luci-app-daede/update-geo.sh geoip": [ "exec" ],
 				"/usr/share/luci-app-daede/update-geo.sh geosite": [ "exec" ],
@@ -65,7 +65,7 @@
 				"/usr/share/luci-app-daede/update-pkg.sh daed": [ "exec" ],
 				"/usr/share/luci-app-daede/update-pkg.sh luci-app-daede": [ "exec" ]
 			},
-			"uci": [ "dae", "daed", "daed_luci" ]
+			"uci": [ "dae", "daed", "daede" ]
 		}
 	}
 }

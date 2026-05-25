@@ -84,8 +84,8 @@ function detectRunning() {
 }
 
 function loadActiveBackend() {
-	return L.resolveDefault(uci.load('daed_luci'), null).then(function() {
-		const active = uci.get('daed_luci', 'config', 'active_backend');
+	return L.resolveDefault(uci.load('daede'), null).then(function() {
+		const active = uci.get('daede', 'config', 'active_backend');
 		return BACKENDS[active] ? active : '';
 	});
 }
@@ -94,12 +94,12 @@ function setActiveBackend(name) {
 	if (!BACKENDS[name])
 		return Promise.reject(new Error('invalid backend: ' + name));
 
-	return exists('/etc/config/daed_luci').then(function(ok) {
+	return exists('/etc/config/daede').then(function(ok) {
 		if (!ok)
-			return fs.write('/etc/config/daed_luci', '');
-	}).then(function() { return fs.exec('/sbin/uci', ['set', 'daed_luci.config=daed_luci']); })
-		.then(function() { return fs.exec('/sbin/uci', ['set', 'daed_luci.config.active_backend=' + name]); })
-		.then(function() { return fs.exec('/sbin/uci', ['commit', 'daed_luci']); });
+			return fs.write('/etc/config/daede', '');
+	}).then(function() { return fs.exec('/sbin/uci', ['set', 'daede.config=daede']); })
+		.then(function() { return fs.exec('/sbin/uci', ['set', 'daede.config.active_backend=' + name]); })
+		.then(function() { return fs.exec('/sbin/uci', ['commit', 'daede']); });
 }
 
 function detectBackend() {

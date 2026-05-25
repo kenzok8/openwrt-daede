@@ -7,7 +7,7 @@
 'require uci';
 'require ui';
 'require view';
-'require view.daed.backend as backend';
+'require view.daede.backend as backend';
 
 const CSS = [
 	'.dd-wrap{padding:4px 0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC",sans-serif}',
@@ -365,7 +365,7 @@ function renderDaedSettings() {
 	o.default = '1';
 
 	return wrapSettingsCard(
-		_('daed Settings'),
+		_('daede Settings'),
 		_('A modern dashboard for dae. Subscriptions, nodes, routing and DNS are managed in the daed WebUI.'),
 		m.render(),
 		_('Log Advanced Settings'),

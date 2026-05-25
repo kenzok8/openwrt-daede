@@ -95,9 +95,9 @@ msgstr "开关切换失败：%s"
 msgid "%s is already running. Stop %s before starting %s because both backends share the same eBPF/cgroup attachment."
 msgstr "%s 已在运行。%s 与 %s 共用 eBPF/cgroup 挂载点，请先停止前者。"
 
-# ---- config.js: daed Settings ----
-msgid "daed Settings"
-msgstr "daed 设置"
+# ---- config.js: daede Settings ----
+msgid "daede Settings"
+msgstr "daede 设置"
 
 msgid "A modern dashboard for dae. Subscriptions, nodes, routing and DNS are managed in the daed WebUI."
 msgstr "dae 的现代化控制台。订阅、节点、路由和 DNS 请在 daed WebUI 中管理。"
