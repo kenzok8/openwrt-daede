@@ -39,6 +39,27 @@ jobs:
       - uses: actions/checkout@v6
 
       - name: Build packages
+        id: build_packages_first
+        continue-on-error: true
+        uses: kenzok8/gh-action-sdk@hash
+        env:
+          CONTAINER: immortalwrt/sdk
+          ARCH: ${{ matrix.arch }}-openwrt-${{ matrix.sdk }}
+          FEEDNAME: daede
+          PACKAGES: dae daed luci-app-daede
+          # wall supplies v2ray-geoip / v2ray-geosite (subpackages of v2ray-geodata)
+          EXTRA_FEEDS: src-git|wall|https://github.com/kenzok8/wall
+          NO_REFRESH_CHECK: true
+          IGNORE_ERRORS: true
+          INDEX: 1
+          KEY_BUILD: ${{ secrets.OPKG_KEY_BUILD }}
+          PRIVATE_KEY: ${{ secrets.APK_PRIVATE_KEY }}
+          # dae / daed go.mod requires Go 1.26; override SDK's bundled golang.
+          GOLANG_REPO: https://github.com/kenzok8/golang
+          GOLANG_BRANCH: '1.26'
+
+      - name: Retry build packages once on failure
+        if: steps.build_packages_first.outcome == 'failure'
         uses: kenzok8/gh-action-sdk@hash
         env:
           CONTAINER: immortalwrt/sdk
