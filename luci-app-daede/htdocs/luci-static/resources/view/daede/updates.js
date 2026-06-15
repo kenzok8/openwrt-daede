@@ -112,6 +112,9 @@ function tailLog(path, into) {
 
 return view.extend({
 	load: function() {
+		// kick a background `apk update` so the view reflects newly released
+		// versions; the next poll reads the refreshed index. Fire-and-forget.
+		fs.exec('/usr/share/luci-app-daede/refresh-index.sh', []).catch(function() {});
 		return Promise.all([
 			backend.detectBackend(),
 			uci.load('daed').catch(function() {})
