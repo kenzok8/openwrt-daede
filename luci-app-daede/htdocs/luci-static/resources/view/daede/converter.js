@@ -221,22 +221,6 @@ return view.extend({
 	},
 
 	render: function(data) {
-		if (!document.documentElement.hasAttribute('data-daede-theme')) {
-			var hrefs = Array.prototype.map.call(document.styleSheets, function(s) { return s.href || ''; }).join(' ');
-			document.documentElement.setAttribute('data-daede-theme', /\/argon\//.test(hrefs) ? 'argon' : 'bootstrap');
-			try {
-				var probe = [document.body, document.documentElement];
-				for (var i = 0; i < probe.length; i++) {
-					var m = getComputedStyle(probe[i]).backgroundColor.match(/[\d.]+/g);
-					if (!m) continue;
-					var a = m.length >= 4 ? parseFloat(m[3]) : 1;
-					if (a < 0.1) continue;
-					if (0.299*m[0] + 0.587*m[1] + 0.114*m[2] < 128)
-						document.documentElement.setAttribute('data-darkmode', 'true');
-					break;
-				}
-			} catch (e) {}
-		}
 		const state = {
 			results: [],
 			ignoredInfo: 0,
