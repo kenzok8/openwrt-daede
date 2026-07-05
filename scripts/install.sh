@@ -118,6 +118,25 @@ feed_base_for() {
   printf '%s/%s/%s' "$1" "$2" "$3"
 }
 
+package_sdks() {
+  sdk="$1"
+  [ -n "$sdk" ] || return 0
+
+  if [ "$PM" = "opkg" ]; then
+    case "$sdk" in
+      2[5-9].*|[3-9][0-9].*)
+        # QWRT may report an OpenWrt 25.x SDK while still shipping opkg.
+        # Use the last IPK feed first instead of downloading APK packages.
+        printf '24.10\n'
+        [ "$sdk" = "24.10" ] || printf '%s\n' "$sdk"
+        return
+        ;;
+    esac
+  fi
+
+  printf '%s\n' "$sdk"
+}
+
 # Which packages to fetch, in install order (core before luci so opkg/apk can
 # resolve the luci-app-daede -> core dependency from local files).
 wanted_pkgs() {
@@ -306,15 +325,26 @@ SDK="$(detect_sdk || true)"
 
 # Try the exact arch first, then the generic fallback (e.g. cortex-a76 -> generic).
 RESOLVED_ARCH=""
-for a in "$ARCH" $(fallback_arch "$ARCH" || true); do
-  if [ -n "$SDK" ] && resolve_from_manifest "$SDK" "$a"; then
-    echo "Using R2 feed manifest: ${SDK}/${a}"
-    RESOLVED_ARCH="$a"; break
-  elif resolve_from_github "$a" "$EXT"; then
-    echo "Using GitHub latest release: ${a}"
-    RESOLVED_ARCH="$a"; break
-  fi
+RESOLVED_SDK=""
+for sdk_try in $(package_sdks "$SDK"); do
+  for a in "$ARCH" $(fallback_arch "$ARCH" || true); do
+    if resolve_from_manifest "$sdk_try" "$a"; then
+      [ "$sdk_try" = "$SDK" ] || echo "Device reports SDK ${SDK:-?}; using ${sdk_try} ${EXT} feed for ${PM}."
+      echo "Using R2 feed manifest: ${sdk_try}/${a}"
+      RESOLVED_ARCH="$a"
+      RESOLVED_SDK="$sdk_try"
+      break 2
+    fi
+  done
 done
+if [ -z "$RESOLVED_ARCH" ]; then
+  for a in "$ARCH" $(fallback_arch "$ARCH" || true); do
+    if resolve_from_github "$a" "$EXT"; then
+      echo "Using GitHub latest release: ${a}"
+      RESOLVED_ARCH="$a"; break
+    fi
+  done
+fi
 [ -n "$RESOLVED_ARCH" ] || { echo "Cannot resolve daede packages for arch: $ARCH"; exit 1; }
 [ "$RESOLVED_ARCH" = "$ARCH" ] || echo "No ${ARCH} feed; using ${RESOLVED_ARCH} (ABI-compatible)."
 # apk rejects packages whose arch is not listed in /etc/apk/arch; register fallback arch
@@ -341,7 +371,8 @@ for pkg in $(wanted_pkgs); do
   FILES="$FILES $TMP_DIR/${pkg}.${EXT}"
 done
 
-GEO_URLS="$(resolve_geodata "$SDK" "$RESOLVED_ARCH" || true)"
+GEO_SDK="${RESOLVED_SDK:-$SDK}"
+GEO_URLS="$(resolve_geodata "$GEO_SDK" "$RESOLVED_ARCH" || true)"
 if [ -n "$GEO_URLS" ]; then
   for gurl in $GEO_URLS; do
     gout="$TMP_DIR/${gurl##*/}"
@@ -353,7 +384,7 @@ if [ -n "$GEO_URLS" ]; then
     fi
   done
 else
-  echo "[WARN] v2ray-geoip/geosite not found in feed for ${SDK:-?}/${RESOLVED_ARCH}; relying on device repos."
+  echo "[WARN] v2ray-geoip/geosite not found in feed for ${GEO_SDK:-?}/${RESOLVED_ARCH}; relying on device repos."
 fi
 
 echo "Installing (core first, then LuCI)..."
