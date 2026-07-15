@@ -53,7 +53,7 @@ jobs:
           CONTAINER: immortalwrt/sdk
           ARCH: ${{ matrix.arch }}-openwrt-${{ matrix.sdk }}
           FEEDNAME: daede
-          PACKAGES: dae daed luci-app-daede
+          PACKAGES: dae daed luci-app-daede vmlinux-btf
           # wall supplies v2ray-geoip / v2ray-geosite (subpackages of v2ray-geodata)
           EXTRA_FEEDS: src-git|wall|https://github.com/kenzok8/wall
           NO_REFRESH_CHECK: true
