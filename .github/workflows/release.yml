@@ -84,9 +84,9 @@ jobs:
           # 此 workflow 只做候选构建，永不带发布密钥签名。
           KEY_BUILD: ''
           PRIVATE_KEY: ''
-          # dae / daed go.mod requires Go 1.26; override SDK's bundled golang.
+          # dae / daed go.mod requires Go 1.27; override SDK's bundled golang.
           GOLANG_REPO: https://github.com/kenzok8/golang
-          GOLANG_BRANCH: '1.26'
+          GOLANG_BRANCH: '1.27'
 
       - name: Require all release packages
         if: always()

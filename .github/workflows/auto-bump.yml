@@ -318,7 +318,7 @@ jobs:
       - uses: actions/setup-go@v6
         if: steps.detect.outputs.changed == 'true'
         with:
-          go-version: "1.26.10"
+          go-version: "1.27.3"
 
       - name: Sync kenzok8 forks from olicesx
         if: steps.detect.outputs.changed == 'true' && steps.lane.outputs.lane != 'current'
