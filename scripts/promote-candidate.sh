@@ -430,6 +430,25 @@ aggregate_record_run() {
     aggregate_discard_intent
 }
 
+# 历史候选的包副本没人再消费（release 里有同样的字节），只保留 JSON 元数据。
+# 只是瘦身，失败不影响发布正确性，所以告警而不阻断。
+prune_candidate_staging() {
+    local base="r2:${R2_BUCKET}/openwrt-feed/daed-candidates" listing dir
+    if ! listing=$(rclone lsf "$base/" --dirs-only 2>&1); then
+        echo "warning: cannot list candidate staging: $listing" >&2
+        return 0
+    fi
+    for dir in $(printf '%s\n' "$listing" | tr -d '/'); do
+        [ -n "$dir" ] || continue
+        if [ "$dir" = "$CANDIDATE_SHA" ]; then
+            continue
+        fi
+        if ! rclone delete "$base/$dir/" --include '*.ipk' --include '*.apk' 2>/dev/null; then
+            echo "warning: cannot prune staged packages for $dir" >&2
+        fi
+    done
+}
+
 # 发布落地后清聚合状态，残留会挡住下一个候选。
 aggregate_cleanup_state() {
     local listing
@@ -602,5 +621,6 @@ rclone cat "$state/completed/${CANDIDATE_SHA}.json" > "$rclone_dir/completed.jso
 cmp -s "$rclone_dir/pending.json" "$rclone_dir/completed.json" || fail "completion state differs"
 # 聚合状态残留会挡住下一个候选；清理完再释放 pending 槽位。
 aggregate_cleanup_state
+prune_candidate_staging
 rclone deletefile "$pending"
 printf 'promoted %s from build %s\n' "$tag" "$BUILD_RUN_ID"
