@@ -129,7 +129,7 @@ jobs:
 
       - name: Upload package artifacts
         if: steps.sdk.outcome == 'success' && steps.validate.outcome == 'success'
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: pkgs-${{ matrix.arch }}-${{ matrix.sdk }}
           path: |
@@ -137,7 +137,7 @@ jobs:
             bin/packages/${{ matrix.arch }}/daede/*.ipk
           if-no-files-found: error
 
-      - uses: actions/upload-artifact@v6
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: logs-${{ matrix.arch }}-${{ matrix.sdk }}
