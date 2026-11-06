@@ -315,7 +315,7 @@ jobs:
             fi
           } >> "$GITHUB_STEP_SUMMARY"
 
-      - uses: actions/setup-go@v6
+      - uses: actions/setup-go@v7
         if: steps.detect.outputs.changed == 'true'
         with:
           go-version: "1.27.3"
