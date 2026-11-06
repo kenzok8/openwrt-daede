@@ -2,6 +2,15 @@
 
 <p align="center">OpenWrt 一体包：<b>dae</b> 内核 + <b>daed</b> 配套 + <b>luci-app-daede</b> 管理界面。</p>
 
+<div align="center">
+  <a href="https://github.com/kenzok8/openwrt-daede/releases"><img alt="Release" src="https://img.shields.io/github/v/release/kenzok8/openwrt-daede?style=flat-square&label=release"></a>
+  <a href="https://github.com/kenzok8/openwrt-daede/releases"><img alt="Downloads" src="https://img.shields.io/github/downloads/kenzok8/openwrt-daede/total?style=flat-square&label=downloads"></a>
+  <a href="https://github.com/kenzok8/openwrt-daede/commits/main"><img alt="Last commit" src="https://img.shields.io/github/last-commit/kenzok8/openwrt-daede/main?style=flat-square"></a>
+  <a href="https://github.com/kenzok8/openwrt-daede/stargazers"><img alt="GitHub stars" src="https://img.shields.io/github/stars/kenzok8/openwrt-daede?style=flat-square"></a>
+  <a href="https://github.com/kenzok8/openwrt-daede/issues?q=is%3Aissue+is%3Aclosed"><img alt="Closed issues" src="https://img.shields.io/github/issues-closed/kenzok8/openwrt-daede?style=flat-square"></a>
+  <a href="https://github.com/kenzok8/openwrt-daede/blob/main/LICENSE"><img alt="License" src="https://img.shields.io/github/license/kenzok8/openwrt-daede?style=flat-square"></a>
+</div>
+
 <p align="center">
   <img src="https://raw.githubusercontent.com/kenzok8/kenzok8/main/screenshot/daede/dae-logo.png" height="88" alt="dae">
   &nbsp;&nbsp;&nbsp;
