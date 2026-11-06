@@ -1,0 +1,53 @@
+<h1>内核 BTF</h1>
+
+<p>dae / daed 用 <b>CO-RE eBPF</b>，加载时必须有当前内核的 BTF 信息。没有它，服务就是起不来 —— 这是新装失败最常见的原因，而且报错通常只说加载失败，看不出是 BTF 缺了。</p>
+
+<h2 id="check">先确认缺不缺</h2>
+
+<pre><code>[ -e /sys/kernel/btf/vmlinux ] &amp;&amp; echo "已有 BTF，无需处理" || echo "缺 BTF，要补"</code></pre>
+
+<table>
+  <tr><th>内核情况</th><th><code>/sys/kernel/btf/vmlinux</code></th><th>dae / daed</th></tr>
+  <tr><td>开了 <code>CONFIG_DEBUG_INFO_BTF</code>（ImmortalWrt 25.12 等）</td><td>有</td><td>正常</td></tr>
+  <tr><td>官方 OpenWrt、在线 ImageBuilder 等固件</td><td>没有</td><td>启动失败</td></tr>
+</table>
+
+<h2 id="fix">两条补救路</h2>
+
+<ol>
+  <li>装匹配内核的 <b><a href="https://github.com/kenzok8/vmlinux-btf">vmlinux-btf</a></b> 包 —— 一键安装脚本会自动检测并拉匹配你内核 + 架构的包，也可以手动下</li>
+  <li>换一份开了 BTF 的固件 —— 用 <a href="https://github.com/kenzok8/imagebuilder">kenzok8/imagebuilder</a> 在线生成，内核默认已开</li>
+</ol>
+
+<h2 id="manual">手动装 vmlinux-btf</h2>
+
+<p>先查内核与架构，再挑对应的包：</p>
+
+<pre><code>uname -r        # 例如 6.12.112
+uname -m</code></pre>
+
+<table>
+  <tr><th>内核版本</th><th>固件 / 包管理</th><th>格式</th></tr>
+  <tr><td><code>6.6.x</code></td><td>24.10（opkg）</td><td><code>.ipk</code></td></tr>
+  <tr><td><code>6.12.x</code></td><td>25.12（apk）</td><td><code>.apk</code></td></tr>
+</table>
+
+<pre><code>opkg install ./vmlinux-btf_*.ipk        # 24.10
+apk add --allow-untrusted ./vmlinux-btf-*.apk   # 25.12</code></pre>
+
+<blockquote>包里就一个分离式 BTF blob，装到 <code>/usr/lib/debug/boot/vmlinux</code>，并按 <code>uname -r</code> 建软链。内核找不到 <code>/sys/kernel/btf/vmlinux</code> 时，cilium/ebpf 会自动回落到这里。所以同一条 6.12 stable 线的小版本差异，一个包基本都能覆盖。</blockquote>
+
+<h2 id="verify">装完怎么验</h2>
+
+<pre><code>ls -l /usr/lib/debug/boot/
+head -c 4 /usr/lib/debug/boot/vmlinux | hexdump -C    # 前两字节应为 9f eb</code></pre>
+
+<p>然后重启服务：</p>
+
+<pre><code>/etc/init.d/daede restart</code></pre>
+
+<p>还是起不来，就去看核心日志，别继续猜 —— 日志里会明确写出是 BTF 加载失败还是别的原因。</p>
+
+<h2 id="why">为什么同系列能通用</h2>
+
+<p>BTF 描述的是结构体布局与类型关系。6.12.x 这条 stable 线里，回移补丁极少动结构体布局，所以 <code>6.12.112</code> 的 BTF 用在 <code>6.12.103</code> 固件上一般没问题；真遇到「类型不匹配」，就得针对那个内核重编一份。生成方式是拿对应内核源码 + 固件配置，开 <code>DEBUG_INFO_BTF</code> 编一遍影子内核，再用 <code>pahole</code> 编码出分离式 BTF。</p>

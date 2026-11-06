@@ -1,0 +1,9 @@
+# 本地工具产物
+.codegraph/
+.playwright-cli/
+.build/
+
+# 内部笔记不入库
+/docs/internal/
+/docs/superpowers/
+CLAUDE.md

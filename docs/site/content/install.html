@@ -1,0 +1,63 @@
+<h1>安装与升级</h1>
+
+<p>一键脚本默认装 <b>dae</b>、<b>daed</b> 和 LuCI 三件套，并顺带下载 GeoIP / GeoSite 依赖。</p>
+
+<h2 id="script">一键安装</h2>
+
+<pre><code>wget -O - https://cdn.jsdelivr.net/gh/kenzok8/openwrt-daede@main/scripts/install.sh | ash</code></pre>
+
+<p>镜像没同步到最新脚本时，直连 GitHub：</p>
+
+<pre><code>wget -O - https://raw.githubusercontent.com/kenzok8/openwrt-daede/refs/heads/main/scripts/install.sh | ash</code></pre>
+
+<p>只要 daed 后端：</p>
+
+<pre><code>wget -O - https://raw.githubusercontent.com/kenzok8/openwrt-daede/refs/heads/main/scripts/install.sh | DAEDE_CORE=daed ash</code></pre>
+
+<blockquote>这个脚本只装包，<b>不会</b>把软件源写进系统。想在 LuCI 里持续在线升级，还要按下面「软件源」那节配一次。</blockquote>
+
+<p>之前只装过 daed 的设备，重跑默认命令就会补装 dae，不用先配软件源。</p>
+
+<p>换加速站：</p>
+
+<pre><code>GITHUB_PROXY_PREFIX=https://你的加速站/ wget -O - https://cdn.jsdelivr.net/gh/kenzok8/openwrt-daede@main/scripts/install.sh | ash</code></pre>
+
+<h2 id="feed">软件源</h2>
+
+<pre><code>wget -qO- https://down.dllkids.xyz/openwrt-feed/openwrt-feed-setup.sh | sh</code></pre>
+
+<p>脚本会检测 SDK 版本与架构、下载公钥、写源配置、刷索引 —— 只配源不装包。之后从 LuCI 的软件包页或命令行升级：</p>
+
+<pre><code>apk update &amp;&amp; apk upgrade                            # 25.12
+opkg update &amp;&amp; opkg upgrade luci-app-daede dae daed   # 24.10</code></pre>
+
+<blockquote>该脚本在 <code>apk update</code> 失败时会尝试 <code>--allow-untrusted</code>。看到这条警告说明验签没通过，先修源或公钥，别把放宽校验的结果当成已验证。</blockquote>
+
+<h2 id="deps">依赖</h2>
+
+<table>
+  <tr><th>包名</th><th>用途</th></tr>
+  <tr><td><code>ca-bundle</code></td><td>CA 证书</td></tr>
+  <tr><td><code>kmod-sched-core</code> / <code>kmod-sched-bpf</code></td><td>eBPF 调度与流量分类</td></tr>
+  <tr><td><code>kmod-veth</code></td><td>虚拟以太网设备</td></tr>
+  <tr><td><code>kmod-xdp-sockets-diag</code></td><td>XDP socket 诊断</td></tr>
+  <tr><td><code>kmod-nft-tproxy</code></td><td>nftables TPROXY</td></tr>
+</table>
+
+<p>dae / daed 二进制由 <code>luci-app-daede</code> 的 Makefile 自动拉对应后端包，不用手动装。</p>
+
+<h2 id="btf">先确认 BTF</h2>
+
+<pre><code>[ -e /sys/kernel/btf/vmlinux ] &amp;&amp; echo 有 BTF || echo 缺 BTF，需补包</code></pre>
+
+<p>缺的话看<a href="btf.html">内核 BTF</a> —— 这是 daed 起不来的头号原因。</p>
+
+<h2 id="uninstall">卸载</h2>
+
+<pre><code>wget -O - https://raw.githubusercontent.com/kenzok8/openwrt-daede/refs/heads/main/scripts/uninstall.sh | ash</code></pre>
+
+<h2 id="maintainer">维护者发布流程</h2>
+
+<p>手动发代码修复：Actions 里跑「Sync and release dae/daed」选 <code>current</code>，等候选检查与 16 目标构建通过后，在测试设备上复测包，再在「Promote verified daede candidate」里填运行摘要中的候选 SHA。晋升复用已验证的包并等公开源聚合完成。</p>
+
+<blockquote><code>release.yml</code> 单独跑只出候选包，不会更新公开源；定时上游同步仍按 core / perf 检查、验证、自动晋升，<code>ENABLE_UNATTENDED_RELEASE</code> 只控制定时那次是否自动发布，不影响手动 <code>current</code> 候选构建。</blockquote>

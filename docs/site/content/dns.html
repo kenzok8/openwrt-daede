@@ -1,0 +1,34 @@
+<h1>DNS 与手动模式</h1>
+
+<p>默认 DNS 两个上游就够用，不用动。这页讲清它们分别管什么，以及什么时候该切到手动模式。</p>
+
+<h2 id="upstream">两个上游</h2>
+
+<table>
+  <tr><th>设置</th><th>默认</th><th>管什么</th></tr>
+  <tr><td>国内上游</td><td><code>udp://dns.alidns.com:53</code></td><td>解析国内域名，尽量拿到国内 CDN IP</td></tr>
+  <tr><td>兜底上游</td><td><code>tcp+udp://dns.google:53</code></td><td>解析其它域名，降低污染概率</td></tr>
+</table>
+
+<p>常见自定义组合：国内 <code>udp://223.5.5.5</code> + 兜底 <code>tls://1.1.1.1:853</code>。改完记得重新「保存并热重载」。</p>
+
+<blockquote>DNS 只管「问谁解析」。哪股流量直连、哪股走代理，由<a href="routing.html">路由</a>决定 —— 两者别混着调。</blockquote>
+
+<h2 id="manual">高级 / 手动模式</h2>
+
+<p>表单底部有「<b>高级 / 手动模式</b>」，里面是个文本编辑器，可以直接手写 dae 的 <code>config.dae</code>。</p>
+
+<ul>
+  <li>适合老手，或者表单覆盖不到的玩法</li>
+  <li>它的保存按钮叫「<b>保存手动配置</b>」，跟表单的「保存并热重载」是两套动作</li>
+</ul>
+
+<blockquote>两种方式别混着用：上面的表单再保存一次，会重新生成配置文件，把你手写的改动整个覆盖掉。</blockquote>
+
+<h2 id="tips">几条使用经验</h2>
+
+<ul>
+  <li>改完立刻验证：保存后看顶部服务状态是否还 ON，顺手开个外站试试</li>
+  <li>改配置前先去 <code>更新 → 配置备份</code> 卡片点「导出」，炸了能一键回退</li>
+  <li>节点池空着的时候，先看服务是不是没启动 —— 订阅是启动时才拉</li>
+</ul>

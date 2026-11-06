@@ -1,0 +1,50 @@
+<h1>常见问题</h1>
+
+<p>先固定三个事实再查：当前哪个后端（dae / daed）、哪份配置、服务状态是不是 ON。</p>
+
+<h2 id="no-internet">保存成功了，但上不了网</h2>
+
+<p>九成是服务没启动。看页面顶部「服务状态」是不是 ON —— dae 没跑，配置不生效。表单顶部那条黄色提醒说的就是这件事。</p>
+
+<h2 id="validate">保存时报「校验失败 / validate failed」</h2>
+
+<p>生成的配置 dae 不认。最常见的两种：</p>
+
+<ul>
+  <li>「节点名匹配」里用空格分隔（<code>香港 台湾</code> 匹配不到任何节点）</li>
+  <li>自定义规则箭头右边写了不存在的分组名</li>
+</ul>
+
+<p>检查见<a href="routing.html">订阅、分组与路由</a>。</p>
+
+<h2 id="gray-button">「更新」按钮是灰的</h2>
+
+<p>那一行是固定分享链接（<code>vless://</code> 等），本来就没东西可更新。只有 <code>https://</code> 真订阅的「更新」才是亮的。</p>
+
+<h2 id="empty-pool">填了订阅，节点池却是空的</h2>
+
+<ol>
+  <li>确认 dae 已启动 —— 订阅是启动时才去拉</li>
+  <li>点那条订阅的「更新」重拉一次</li>
+  <li>还不行就检查订阅链接本身是否有效</li>
+</ol>
+
+<h2 id="startup">服务起不来</h2>
+
+<ol>
+  <li>先查 BTF：<code>[ -e /sys/kernel/btf/vmlinux ]</code>，见<a href="btf.html">内核 BTF</a></li>
+  <li>再看核心日志里的具体报错</li>
+  <li>确认依赖模块在：<code>kmod-sched-bpf</code>、<code>kmod-veth</code>、<code>kmod-nft-tproxy</code></li>
+</ol>
+
+<h2 id="both">两个后端能一起跑吗</h2>
+
+<p>不能。dae 与 daed 共用同一套 eBPF 挂载点，页面切后端时会自动停掉另一个。</p>
+
+<h2 id="gui">想要图形化管理</h2>
+
+<p>把后端切到 <b>daed</b>，浏览器开 <code>路由器IP:2023</code>，那里能拖拽点选管订阅、节点、路由、DNS。</p>
+
+<h2 id="rollback">配置改坏了</h2>
+
+<p><code>更新 → 配置备份</code> 卡片有三个按钮：导出、导入、还原默认。备份含账号与订阅凭据，别乱放；不含内核，内核在「数据更新」里重新下。</p>

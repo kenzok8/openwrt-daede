@@ -1,0 +1,47 @@
+<h1>三步上手</h1>
+
+<p>这页只讲 <b>dae</b> 后端的 LuCI 表单。想要网页控制台就把后端切到 daed，浏览器开 <code>路由器IP:2023</code>。</p>
+
+<h2 id="step-backend">1. 选后端</h2>
+
+<p>进 <code>服务 → daede</code>，页面顶部「后端」点 <b>dae</b>。切后端时会自动停掉另一个 —— 两个后端共用 eBPF 挂载点，不能同时跑。</p>
+
+<h2 id="step-fill">2. 填订阅或节点</h2>
+
+<p>往下到「DAE 配置」卡片，按手上有什么分两种情况：</p>
+
+<table>
+  <tr><th>手上是什么</th><th>填哪里</th></tr>
+  <tr><td>机场订阅链接（<code>https://…</code>）</td><td>「订阅」→ 添加，粘贴链接</td></tr>
+  <tr><td>单条分享链接（<code>vless://</code> / <code>ss://</code> / <code>vmess://</code>）</td><td>「节点」→ 添加，粘贴链接</td></tr>
+</table>
+
+<p>标签可以留空，dae 会自动命名；填了更好认，比如 <code>香港机场</code>。</p>
+
+<h2 id="step-start">3. 保存并启动</h2>
+
+<ol>
+  <li>点卡片底部绿色「<b>保存并热重载</b>」—— 配置自动生成、校验，过了才生效</li>
+  <li>回到顶部「服务状态」，把开关打到 ON</li>
+</ol>
+
+<blockquote>dae 没运行时，表单顶部会有黄色提醒：保存的配置要打开开关才生效。保存成功 ≠ 已经跑起来。</blockquote>
+
+<p>然后手机、电脑连上这台路由器就能用。</p>
+
+<h2 id="check">怎么判断真的好了</h2>
+
+<ul>
+  <li>顶部「服务状态」是 ON</li>
+  <li>国内网站能开</li>
+  <li>Google / YouTube 这类外站能开</li>
+  <li>节点池里有节点（订阅是启动时才拉的）</li>
+</ul>
+
+<h2 id="next">下一步</h2>
+
+<ul>
+  <li>建分组、写路由规则：<a href="routing.html">订阅、分组与路由</a></li>
+  <li>改 DNS 或直接手写配置：<a href="dns.html">DNS 与手动模式</a></li>
+  <li>保存报错、上不了网：<a href="troubleshooting.html">常见问题</a></li>
+</ul>

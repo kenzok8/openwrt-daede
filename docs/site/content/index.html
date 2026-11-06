@@ -1,0 +1,67 @@
+<p class="hero"><img src="assets/logo.png" width="96" height="96" alt="dae" /></p>
+
+<h1>daede</h1>
+
+<p>daede 是 OpenWrt 上的一体包：<b>dae</b>（eBPF 透明代理内核）+ <b>daed</b>（自带 Web 面板的发行版）+ <b>luci-app-daede</b>（统一 LuCI 界面）。一套 UCI 配置同时适配两个后端，切内核不用重装。</p>
+
+<blockquote>支持 OpenWrt <b>24.10+</b>，推荐 25.x。装在没开 <code>CONFIG_DEBUG_INFO_BTF</code> 的固件上要先补 <a href="btf.html">内核 BTF</a>，否则 daed 起不来。</blockquote>
+
+<div class="cards">
+  <a class="card" href="install.html"><strong>安装与升级 →</strong><span>一键脚本、签名 feed、卸载</span></a>
+  <a class="card" href="quickstart.html"><strong>三步上手 →</strong><span>选后端、填订阅、启动</span></a>
+  <a class="card" href="btf.html"><strong>内核 BTF →</strong><span>起不来先看这一页</span></a>
+</div>
+
+<h2 id="components">三个组件</h2>
+
+<table>
+  <tr><th>组件</th><th>说明</th></tr>
+  <tr><td><b>dae</b></td><td>基于 eBPF 的透明代理内核。流量在内核态分流，直连流量几乎零开销</td></tr>
+  <tr><td><b>daed</b></td><td>dae 的「带 Web 面板」版本：dae-wing + dae 核心 + 内嵌前端，浏览器开 <code>路由器IP:2023</code></td></tr>
+  <tr><td><b>luci-app-daede</b></td><td>LuCI 界面，dae 与 daed 共用同一套配置，页面顶部一键切后端</td></tr>
+</table>
+
+<h2 id="which">dae 还是 daed</h2>
+
+<table>
+  <tr><th></th><th>dae</th><th>daed</th></tr>
+  <tr><td>界面</td><td>LuCI 表单</td><td>自带网页控制台（<code>:2023</code>）</td></tr>
+  <tr><td>适合</td><td>想简单、配置少</td><td>想图形化、功能全</td></tr>
+  <tr><td>资源占用</td><td>更轻</td><td>略重</td></tr>
+</table>
+
+<p>两个后端<b>不能同时运行</b>（共用同一套 eBPF 挂载点）。切后端时 LuCI 会自动停掉另一个。</p>
+
+<h2 id="kernel-build">内核不是简单打包上游</h2>
+
+<p>相比直接拿原版二进制，这条链做了三件事：</p>
+
+<table>
+  <tr><th>做了什么</th><th>结果</th></tr>
+  <tr><td>性能基线 + 官方 main 合并</td><td>核心始终跟官方同步，同时保住连接状态合并、egress 重定向、DNS/UDP 路径这些优化</td></tr>
+  <tr><td>PGO + <code>GOEXPERIMENT=newinliner,simd</code></td><td>按真实采样热点优化，静态链接 <code>-trimpath</code></td></tr>
+  <tr><td>commit 全部锁在 <code>ci/pins.env</code></td><td>源码冻结成自托管 tarball 并写 <code>PKG_HASH</code>，上游删库 / force-push 也不影响历史版本复现</td></tr>
+</table>
+
+<p>架构覆盖到 <b>armv7</b>（a7 / a9），靠 <code>vmlinux-arm.h</code> 补丁解决 trace eBPF 的编译问题。</p>
+
+<h2 id="arch">支持范围</h2>
+
+<table>
+  <tr><th>架构</th><th>状态</th></tr>
+  <tr><td><code>x86_64</code> · <code>i386</code></td><td>完整内核包</td></tr>
+  <tr><td><code>aarch64_generic</code> · <code>aarch64_cortex-a53</code> · <code>aarch64_cortex-a72</code></td><td>完整内核包</td></tr>
+  <tr><td><code>arm_cortex-a7_neon-vfpv4</code> · <code>arm_cortex-a9_neon</code></td><td>完整内核包（armv7 走补丁编译）</td></tr>
+</table>
+
+<h2 id="what-it-is-not">它不是什么</h2>
+
+<ul>
+  <li>不是多内核面板 —— 只有 dae / daed 两个后端，同一内核的两种皮。</li>
+  <li>不需要 <code>CONFIG_DEBUG_INFO_BTF</code> 之外的额外内核编译知识，缺 BTF 装个补丁包就行。</li>
+  <li>别和 Clashoo / HomeProxy 同时抢透明代理；要共存只能切「仅内核」并错开端口。</li>
+</ul>
+
+<h2 id="where-to-start">从哪里开始</h2>
+
+<p>没装过先看<a href="install.html">安装与升级</a>；装完起不来，跳<a href="btf.html">内核 BTF</a>；起来了不知道表单怎么填，看<a href="quickstart.html">三步上手</a>。想要更细的图文教程，仓库 Wiki 那篇 dae 后端使用指南写得更啰嗦。</p>

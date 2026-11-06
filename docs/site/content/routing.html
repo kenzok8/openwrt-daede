@@ -1,0 +1,65 @@
+<h1>订阅、分组与路由</h1>
+
+<p>三块拼起来才是一条完整链路：<b>订阅 / 节点</b>提供原料，<b>分组</b>把节点分堆，<b>路由</b>决定哪股流量用哪堆。</p>
+
+<h2 id="subs">订阅和节点的区别</h2>
+
+<table>
+  <tr><th></th><th>订阅</th><th>节点</th></tr>
+  <tr><td>填什么</td><td>机场给的 <code>https://</code> 订阅链接</td><td>单条 <code>vless://</code> <code>ss://</code> <code>vmess://</code> 分享链接</td></tr>
+  <tr><td>一个链接 =</td><td>一批节点</td><td>一个节点</td></tr>
+  <tr><td>能更新吗</td><td>能，机场会更新节点</td><td>不能，链接写死了</td></tr>
+</table>
+
+<p>所以「订阅」表里：真订阅那一行「更新」是亮的；固定分享链接那一行「更新」是灰的（提示「固定链接，无需更新」）—— 这是正常现象，不是坏了。</p>
+
+<blockquote>固定的单节点链接其实更适合放进「节点」表，语义更清楚。</blockquote>
+
+<h2 id="groups">分组：把节点分堆</h2>
+
+<p>分组（如 <code>proxy</code>、<code>AI</code>）是路由的目标。每个分组三项：</p>
+
+<table>
+  <tr><th>项目</th><th>怎么填</th></tr>
+  <tr><td>名称</td><td>随便起，路由里要原样引用</td></tr>
+  <tr><td>策略</td><td>最小移动平均延迟（推荐，稳）、最小最近延迟（激进）、随机、固定第一个</td></tr>
+  <tr><td>来源订阅 / 节点名匹配</td><td>都留空 = 全部节点；填了就把匹配的<b>包含</b>进来，多条件之间是「或」</td></tr>
+</table>
+
+<p>「节点名匹配」每行一个关键词，多行之间是「或」：</p>
+
+<pre><code>香港
+台湾</code></pre>
+
+<p>也可以一行用竖线写正则，效果一样：</p>
+
+<pre><code>香港|台湾</code></pre>
+
+<blockquote>别用空格分隔 —— <code>香港 台湾</code> 会被当成一整串，一个都匹配不到。</blockquote>
+
+<p>「来源订阅」+「节点名匹配」一起填也是「或」：<code>来源订阅 = mying</code> 配 <code>节点名匹配 = vps</code>，这个分组就同时包含机场全部节点和你那条叫 vps 的单节点。</p>
+
+<h2 id="routing">路由：哪些流量走代理</h2>
+
+<table>
+  <tr><th>开关 / 字段</th><th>默认</th><th>作用</th></tr>
+  <tr><td>私网直连</td><td>开</td><td>局域网与内网地址不代理</td></tr>
+  <tr><td>国内直连</td><td>开</td><td>国内网站和 IP 直连</td></tr>
+  <tr><td>拦截广告</td><td>关</td><td>命中广告域名列表直接掐断</td></tr>
+  <tr><td>兜底分组</td><td>—</td><td>上面都没命中的流量走哪个分组</td></tr>
+</table>
+
+<h2 id="rules">自定义规则</h2>
+
+<p>格式永远是 <code>匹配条件 -&gt; 目标</code>，一行一条，在兜底之前生效。目标只能是三种：分组名、<code>direct</code>、<code>block</code>。</p>
+
+<pre><code>domain(geosite:openai) -&gt; AI
+domain(suffix: youtube.com) -&gt; proxy
+dip(geoip:jp) -&gt; proxy
+dip(1.1.1.1) -&gt; direct</code></pre>
+
+<p>条件可以组合：<code>&amp;&amp;</code> 是「并且」，<code>!</code> 是「排除」。</p>
+
+<pre><code>domain(geosite:cn) &amp;&amp; !domain(suffix: speedtest.cn) -&gt; proxy</code></pre>
+
+<blockquote>箭头右边的分组名必须和实际建的一模一样，否则保存时报「校验失败」。</blockquote>

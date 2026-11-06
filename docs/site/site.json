@@ -1,0 +1,32 @@
+{
+  "title": "daede",
+  "subtitle": "dae / daed 的 OpenWrt 一体包",
+  "description": "luci-app-daede：dae 与 daed 双后端，同一套 UCI 配置热切换，配可复现的 PGO 优化内核构建。",
+  "base_url": "https://kenzok8.github.io/openwrt-daede/",
+  "repo": "kenzok8/openwrt-daede",
+  "version_file": "luci-app-daede/Makefile",
+  "nav": [
+    {
+      "group": "开始使用",
+      "items": [
+        { "page": "index.html", "title": "概览" },
+        { "page": "install.html", "title": "安装与升级" },
+        { "page": "quickstart.html", "title": "三步上手" }
+      ]
+    },
+    {
+      "group": "日常使用",
+      "items": [
+        { "page": "routing.html", "title": "订阅、分组与路由" },
+        { "page": "dns.html", "title": "DNS 与手动模式" }
+      ]
+    },
+    {
+      "group": "参考",
+      "items": [
+        { "page": "btf.html", "title": "内核 BTF" },
+        { "page": "troubleshooting.html", "title": "常见问题" }
+      ]
+    }
+  ]
+}
