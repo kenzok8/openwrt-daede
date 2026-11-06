@@ -734,7 +734,10 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          url=$(gh workflow run promote-candidate.yml --ref main \
+          # 这个 job 没有 checkout，gh 找不到 .git 就不知道该操作哪个仓库，
+          # 必须显式带 --repo，否则报 "not a git repository"。
+          url=$(gh workflow run promote-candidate.yml \
+            --repo "${{ github.repository }}" --ref main \
             -f candidate_sha="${{ needs.bump.outputs.tested_sha }}")
           echo "$url"
           run_id=$(printf '%s\n' "$url" | sed -nE 's|.*/runs/([0-9]+).*|\1|p' | tail -1)
@@ -743,4 +746,4 @@ jobs:
             exit 1
           }
           echo "promote run: $run_id"
-          gh run watch "$run_id" --exit-status
+          gh run watch "$run_id" --repo "${{ github.repository }}" --exit-status
