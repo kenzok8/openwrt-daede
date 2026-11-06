@@ -35,7 +35,7 @@ LAYOUT = Template(
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="color-scheme" content="light dark" />
+    <meta name="color-scheme" content="dark light" />
     <title>$title$title_suffix</title>
     <meta name="description" content="$description" />
     <link rel="canonical" href="$canonical" />
@@ -46,38 +46,42 @@ LAYOUT = Template(
   </head>
   <body data-page="$page">
     <a class="skip-link" href="#content">跳到正文</a>
-    <header class="header">
+    <aside class="rail" id="sidebar">
       <a class="brand" href="index.html">
-        <img src="assets/logo.png" width="28" height="28" alt="" />
-        <span>$site<small>$subtitle</small></span>
+        <img src="assets/logo.png" width="30" height="30" alt="" />
+        <span class="brand-text">$site<em>$subtitle</em></span>
       </a>
-      <button class="search-trigger" type="button" data-search-open>
-        <span aria-hidden="true">⌕</span> 搜索文档 <kbd>Ctrl K</kbd>
-      </button>
-      <nav class="header-links">
-        <a href="https://github.com/$repo">GitHub ↗</a>
-      </nav>
-      <button class="icon-button" id="theme-toggle" type="button" aria-label="切换深浅主题" aria-pressed="false">◐</button>
-      <button class="icon-button menu-button" id="menu-toggle" type="button" aria-controls="sidebar" aria-expanded="false">目录</button>
-    </header>
-    <div class="layout">
-      <aside class="sidebar" id="sidebar">
-$sidebar
-        <div class="sidebar-footer">
-          <span class="version">$version</span>
+      <nav class="rail-nav" aria-label="文档目录">$sidebar</nav>
+      <div class="rail-foot">
+        <code>$version</code>
+        <span>dae · eBPF</span>
+      </div>
+    </aside>
+    <div class="app">
+      <header class="bar">
+        <button class="icon-button menu-button" id="menu-toggle" type="button" aria-controls="sidebar" aria-expanded="false">≡ 目录</button>
+        <div class="chips">
+          <span class="chip">eBPF</span>
+          <span class="chip">dae / daed</span>
+          <span class="chip">OpenWrt 24.10+</span>
         </div>
-      </aside>
-      <main id="content" class="content">
+        <div class="bar-actions">
+          <button class="search-trigger" type="button" data-search-open><span aria-hidden="true">/</span> 搜索</button>
+          <a class="gh-link" href="https://github.com/$repo">GitHub ↗</a>
+          <button class="icon-button" id="theme-toggle" type="button" aria-label="切换深浅主题" aria-pressed="false">◐</button>
+        </div>
+      </header>
+      <main id="content" class="doc">
 $content
-        <footer class="page-footer">
+        <footer class="doc-footer">
           <a href="https://github.com/$repo/blob/main/docs/site/content/$page">编辑此页</a>
-          <span>$site 文档 · GPL-3.0</span>
+          <span>$site 文档 · $license</span>
         </footer>
       </main>
     </div>
     <div class="search-overlay" id="search" hidden>
       <div class="search-box">
-        <input type="search" id="search-input" placeholder="搜索标题与正文…" autocomplete="off" spellcheck="false" />
+        <input type="search" id="search-input" placeholder="grep 文档…" autocomplete="off" spellcheck="false" />
         <button class="icon-button" type="button" data-search-close aria-label="关闭搜索">✕</button>
       </div>
       <ul class="search-results" id="search-results"></ul>
@@ -205,13 +209,12 @@ def build(site: dict, output: Path, check_only: bool) -> list[str]:
 
     for item in pages(site):
         page = item["page"]
-        sidebar = ['        <nav aria-label="文档目录">']
+        sidebar = []
         for group in site["nav"]:
             sidebar.append(f'          <p class="nav-label">{html.escape(group["group"])}</p>')
             for entry in group["items"]:
                 current = ' aria-current="page"' if entry["page"] == page else ""
                 sidebar.append(f'          <a href="{entry["page"]}"{current}>{html.escape(entry["title"])}</a>')
-        sidebar.append("        </nav>")
 
         title = site["title"] if page == "index.html" else f'{item["title"]} · {site["title"]}'
         document = LAYOUT.substitute(
@@ -221,6 +224,7 @@ def build(site: dict, output: Path, check_only: bool) -> list[str]:
             canonical=site["base_url"] + page,
             page=page.removesuffix(".html"),
             repo=site["repo"],
+            license=site["license"],
             site=html.escape(site["title"]),
             subtitle=html.escape(site["subtitle"]),
             sidebar="\n".join(sidebar),
@@ -243,6 +247,7 @@ def build(site: dict, output: Path, check_only: bool) -> list[str]:
             canonical=site["base_url"],
             page="404",
             repo=site["repo"],
+            license=site["license"],
             site=html.escape(site["title"]),
             subtitle=html.escape(site["subtitle"]),
             sidebar='        <nav aria-label="文档目录"><a href="index.html">返回文档首页</a></nav>',
