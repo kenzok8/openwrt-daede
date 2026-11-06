@@ -20,7 +20,7 @@ jobs:
     name: Audit upstream pins
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           # 审计必须发生在 candidate SHA 上，而不是触发 ref 的最新提交。
           ref: ${{ inputs.sha }}

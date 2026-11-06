@@ -58,13 +58,13 @@ jobs:
         arch: ${{ fromJSON(inputs.arch == 'all' && '["aarch64_cortex-a53","aarch64_cortex-a72","aarch64_generic","arm_cortex-a7_neon-vfpv4","arm_cortex-a9","arm_cortex-a9_neon","i386_pentium4","x86_64"]' || format('["{0}"]', inputs.arch)) }}
         sdk: ${{ fromJSON(inputs.sdk == 'all' && '["24.10","25.12"]' || format('["{0}"]', inputs.sdk)) }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           # sha 为空时用触发 ref（日常迭代）；gate 必须传 candidate SHA。
           ref: ${{ inputs.sha != '' && inputs.sha || github.ref }}
 
       - name: Prepare SDK action with pahole
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           repository: kenzok8/gh-action-sdk
           ref: 44f98c51d04aebd1aa79fe4f603559c1ec2085da

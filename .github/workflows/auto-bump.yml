@@ -41,7 +41,7 @@ jobs:
     outputs:
       mode: ${{ steps.state.outputs.mode }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
           persist-credentials: false
@@ -148,7 +148,7 @@ jobs:
       changed: ${{ steps.detect.outputs.changed }}
       staging: ${{ steps.stage.outputs.staging }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
           persist-credentials: false
