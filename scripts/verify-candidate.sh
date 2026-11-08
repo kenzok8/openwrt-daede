@@ -27,7 +27,7 @@ fail() {
 }
 
 for name in BASE_SHA CANDIDATE_SHA STAGING GH_TOKEN R2_ACCESS_KEY_ID \
-    R2_SECRET_ACCESS_KEY R2_ENDPOINT R2_BUCKET MANIFEST_PATH; do
+    R2_SECRET_ACCESS_KEY R2_ENDPOINT R2_BUCKET R2_INTERNAL_BUCKET MANIFEST_PATH; do
     [[ -n "${!name:-}" ]] || fail "missing $name"
 done
 [[ "$CANDIDATE_SHA" =~ ^[0-9a-f]{40}$ ]] || fail "invalid candidate SHA"
@@ -59,7 +59,7 @@ export RCLONE_CONFIG="$workdir/rclone.conf"
 echo "verify-candidate: candidate $CANDIDATE_SHA in $REPO"
 
 # 1. 下载验证记录（关联信息，非证明）
-rclone cat "r2:${R2_BUCKET}/_internal/daed-candidates/${CANDIDATE_SHA}/verification.json" \
+rclone cat "r2:${R2_INTERNAL_BUCKET}/daed-candidates/${CANDIDATE_SHA}/verification.json" \
     > "$workdir/verification.json" || fail "cannot download verification.json for $CANDIDATE_SHA"
 
 # 2. 逐条用 API 核对。期望的 job 名按 workflow 写死。

@@ -8,7 +8,7 @@ fail() {
 }
 
 for name in BASE_SHA CANDIDATE_SHA BUILD_RUN_ID STAGING R2_ACCESS_KEY_ID \
-    R2_SECRET_ACCESS_KEY R2_ENDPOINT R2_BUCKET AGGREGATE_FEED_TOKEN GH_TOKEN; do
+    R2_SECRET_ACCESS_KEY R2_ENDPOINT R2_BUCKET R2_INTERNAL_BUCKET AGGREGATE_FEED_TOKEN GH_TOKEN; do
     [[ -n "${!name:-}" ]] || fail "missing $name"
 done
 [[ "$BASE_SHA" =~ ^[0-9a-f]{40}$ ]] || fail "invalid base SHA"
@@ -68,8 +68,8 @@ no_check_bucket = true
 EOF
 chmod 600 "$rclone_dir/rclone.conf"
 export RCLONE_CONFIG="$rclone_dir/rclone.conf"
-stage="r2:${R2_BUCKET}/_internal/daed-candidates/${CANDIDATE_SHA}"
-probe="r2:${R2_BUCKET}/_internal/daed-candidates/.write-probe-${GITHUB_RUN_ID:-$BUILD_RUN_ID}"
+stage="r2:${R2_INTERNAL_BUCKET}/daed-candidates/${CANDIDATE_SHA}"
+probe="r2:${R2_INTERNAL_BUCKET}/daed-candidates/.write-probe-${GITHUB_RUN_ID:-$BUILD_RUN_ID}"
 rclone copyto publish/manifest.json "$probe"
 rclone deletefile "$probe"
 # --checksum：按内容比对。promote 重试时本地 publish/ 是重新生成的，
@@ -97,7 +97,7 @@ for candidate in publish/feed/*/*/luci-app-daede*.apk publish/feed/*/*/luci-app-
     done < "$rclone_dir/jell-package-list"
 done
 
-state="r2:${R2_BUCKET}/_internal/daed-release-state"
+state="r2:${R2_INTERNAL_BUCKET}/daed-release-state"
 pending="$state/pending.json"
 manifest_digest=$(sha256sum publish/manifest.json | cut -d' ' -f1)
 jq -n --arg sha "$CANDIDATE_SHA" --arg base "$BASE_SHA" \
@@ -432,7 +432,7 @@ aggregate_record_run() {
 
 # 归档过的候选只留元数据（release 里有同样的字节）；未完成的候选续发时还要按字节校验，包文件留着。
 prune_candidate_staging() {
-    local base="r2:${R2_BUCKET}/_internal/daed-candidates" listing dir completed
+    local base="r2:${R2_INTERNAL_BUCKET}/daed-candidates" listing dir completed
     if ! listing=$(rclone lsf "$base/" --dirs-only 2>&1); then
         echo "warning: cannot list candidate staging: $listing" >&2
         return 0

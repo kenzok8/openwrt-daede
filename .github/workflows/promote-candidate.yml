@@ -50,10 +50,11 @@ jobs:
           R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
           R2_ENDPOINT: ${{ secrets.R2_ENDPOINT }}
           R2_BUCKET: ${{ secrets.R2_BUCKET }}
+          R2_INTERNAL_BUCKET: ${{ secrets.R2_INTERNAL_BUCKET }}
         run: |
           set -euo pipefail
           [[ "$CANDIDATE_SHA" =~ ^[0-9a-f]{40}$ ]]
-          for name in R2_ACCESS_KEY_ID R2_SECRET_ACCESS_KEY R2_ENDPOINT R2_BUCKET; do
+          for name in R2_ACCESS_KEY_ID R2_SECRET_ACCESS_KEY R2_ENDPOINT R2_BUCKET R2_INTERNAL_BUCKET; do
             [ -n "${!name}" ] || { echo "::error::missing $name"; exit 1; }
           done
           umask 077
@@ -70,7 +71,7 @@ jobs:
           no_check_bucket = true
           EOF
           export RCLONE_CONFIG="$temp/rclone.conf"
-          rclone cat "r2:${R2_BUCKET}/_internal/daed-candidates/${CANDIDATE_SHA}/verification.json" > "$temp/verification.json"
+          rclone cat "r2:${R2_INTERNAL_BUCKET}/daed-candidates/${CANDIDATE_SHA}/verification.json" > "$temp/verification.json"
           jq -e --arg sha "$CANDIDATE_SHA" '
             .schema_version == 2 and .candidate_sha == $sha and
             (.kind == "main" or .kind == "upstream") and
@@ -118,5 +119,6 @@ jobs:
           R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
           R2_ENDPOINT: ${{ secrets.R2_ENDPOINT }}
           R2_BUCKET: ${{ secrets.R2_BUCKET }}
+          R2_INTERNAL_BUCKET: ${{ secrets.R2_INTERNAL_BUCKET }}
           AGGREGATE_FEED_TOKEN: ${{ secrets.AGGREGATE_FEED_TOKEN }}
         run: bash scripts/promote-candidate.sh
