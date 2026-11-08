@@ -89,7 +89,7 @@ jobs:
           no_check_bucket = true
           EOF
           export RCLONE_CONFIG="$RUNNER_TEMP/daede-rclone.conf"
-          state="r2:${R2_BUCKET}/openwrt-feed/daed-release-state"
+          state="r2:${R2_BUCKET}/_internal/daed-release-state"
           rclone lsf "$state/" --files-only > "$RUNNER_TEMP/state-files"
           if ! grep -Fxq pending.json "$RUNNER_TEMP/state-files"; then
             echo 'mode=new' >> "$GITHUB_OUTPUT"
@@ -110,7 +110,7 @@ jobs:
           jq -e '.staging | test("^auto-bump-staging-[0-9]+-[0-9]+$")' "$RUNNER_TEMP/pending.json" >/dev/null
           jq -e '.build_run_id | type == "number"' "$RUNNER_TEMP/pending.json" >/dev/null
           jq -e '.manifest_sha256 | test("^[0-9a-f]{64}$")' "$RUNNER_TEMP/pending.json" >/dev/null
-          stage="r2:${R2_BUCKET}/openwrt-feed/daed-candidates/${sha}"
+          stage="r2:${R2_BUCKET}/_internal/daed-candidates/${sha}"
           mkdir -p publish
           rclone copy "$stage/" publish/ --fast-list
           rclone check publish/ "$stage/" --download --fast-list
@@ -704,9 +704,9 @@ jobs:
           acl = private
           no_check_bucket = true
           EOF
-          dest="r2:${R2_BUCKET}/openwrt-feed/daed-candidates/${CANDIDATE_SHA}/verification.json"
+          dest="r2:${R2_BUCKET}/_internal/daed-candidates/${CANDIDATE_SHA}/verification.json"
           # immutable：已存在且内容不同则失败，防止覆盖
-          if rclone lsf "r2:${R2_BUCKET}/openwrt-feed/daed-candidates/${CANDIDATE_SHA}/" --files-only 2>/dev/null | grep -Fxq verification.json; then
+          if rclone lsf "r2:${R2_BUCKET}/_internal/daed-candidates/${CANDIDATE_SHA}/" --files-only 2>/dev/null | grep -Fxq verification.json; then
             rclone cat "$dest" | cmp -s - verification.json || {
               echo "::error::verification.json already exists with different content"
               exit 1

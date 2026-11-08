@@ -68,8 +68,8 @@ no_check_bucket = true
 EOF
 chmod 600 "$rclone_dir/rclone.conf"
 export RCLONE_CONFIG="$rclone_dir/rclone.conf"
-stage="r2:${R2_BUCKET}/openwrt-feed/daed-candidates/${CANDIDATE_SHA}"
-probe="r2:${R2_BUCKET}/openwrt-feed/daed-candidates/.write-probe-${GITHUB_RUN_ID:-$BUILD_RUN_ID}"
+stage="r2:${R2_BUCKET}/_internal/daed-candidates/${CANDIDATE_SHA}"
+probe="r2:${R2_BUCKET}/_internal/daed-candidates/.write-probe-${GITHUB_RUN_ID:-$BUILD_RUN_ID}"
 rclone copyto publish/manifest.json "$probe"
 rclone deletefile "$probe"
 # --checksum：按内容比对。promote 重试时本地 publish/ 是重新生成的，
@@ -97,7 +97,7 @@ for candidate in publish/feed/*/*/luci-app-daede*.apk publish/feed/*/*/luci-app-
     done < "$rclone_dir/jell-package-list"
 done
 
-state="r2:${R2_BUCKET}/openwrt-feed/daed-release-state"
+state="r2:${R2_BUCKET}/_internal/daed-release-state"
 pending="$state/pending.json"
 manifest_digest=$(sha256sum publish/manifest.json | cut -d' ' -f1)
 jq -n --arg sha "$CANDIDATE_SHA" --arg base "$BASE_SHA" \
@@ -433,7 +433,7 @@ aggregate_record_run() {
 # 历史候选的包副本没人再消费（release 里有同样的字节），只保留 JSON 元数据。
 # 只是瘦身，失败不影响发布正确性，所以告警而不阻断。
 prune_candidate_staging() {
-    local base="r2:${R2_BUCKET}/openwrt-feed/daed-candidates" listing dir
+    local base="r2:${R2_BUCKET}/_internal/daed-candidates" listing dir
     if ! listing=$(rclone lsf "$base/" --dirs-only 2>&1); then
         echo "warning: cannot list candidate staging: $listing" >&2
         return 0

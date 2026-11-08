@@ -70,7 +70,7 @@ jobs:
           no_check_bucket = true
           EOF
           export RCLONE_CONFIG="$temp/rclone.conf"
-          rclone cat "r2:${R2_BUCKET}/openwrt-feed/daed-candidates/${CANDIDATE_SHA}/verification.json" > "$temp/verification.json"
+          rclone cat "r2:${R2_BUCKET}/_internal/daed-candidates/${CANDIDATE_SHA}/verification.json" > "$temp/verification.json"
           jq -e --arg sha "$CANDIDATE_SHA" '
             .schema_version == 2 and .candidate_sha == $sha and
             (.kind == "main" or .kind == "upstream") and
