@@ -430,19 +430,20 @@ aggregate_record_run() {
     aggregate_discard_intent
 }
 
-# 历史候选的包副本没人再消费（release 里有同样的字节），只保留 JSON 元数据。
-# 只是瘦身，失败不影响发布正确性，所以告警而不阻断。
+# 归档过的候选只留元数据（release 里有同样的字节）；未完成的候选续发时还要按字节校验，包文件留着。
 prune_candidate_staging() {
-    local base="r2:${R2_BUCKET}/_internal/daed-candidates" listing dir
+    local base="r2:${R2_BUCKET}/_internal/daed-candidates" listing dir completed
     if ! listing=$(rclone lsf "$base/" --dirs-only 2>&1); then
         echo "warning: cannot list candidate staging: $listing" >&2
         return 0
     fi
+    if ! completed=$(rclone lsf "$state/completed/" --files-only 2>&1); then
+        echo "warning: cannot list completed releases: $completed" >&2
+        return 0
+    fi
     for dir in $(printf '%s\n' "$listing" | tr -d '/'); do
         [ -n "$dir" ] || continue
-        if [ "$dir" = "$CANDIDATE_SHA" ]; then
-            continue
-        fi
+        printf '%s\n' "$completed" | grep -Fxq "$dir.json" || continue
         if ! rclone delete "$base/$dir/" --include '*.ipk' --include '*.apk' 2>/dev/null; then
             echo "warning: cannot prune staged packages for $dir" >&2
         fi
