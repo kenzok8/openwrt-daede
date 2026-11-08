@@ -1,8 +1,17 @@
+# SPDX-License-Identifier: GPL-3.0-only
+#
+# Detached kernel BTF for CO-RE eBPF (dae/daed) on firmware whose kernel was
+# built without CONFIG_DEBUG_INFO_BTF. Builds a shadow kernel from the same
+# OpenWrt source + .config with BTF enabled, then pahole-encodes a detached
+# vmlinux.btf. cilium/ebpf finds it at /usr/lib/debug/boot/vmlinux-<release>.
+
 include $(TOPDIR)/rules.mk
 include $(INCLUDE_DIR)/kernel.mk
 
 PKG_NAME:=vmlinux-btf
-PKG_VERSION:=$(LINUX_VERSION)
+# SDK 内核常落后于目标固件，允许单独指定影子内核版本
+BTF_KERNEL_VERSION?=$(LINUX_VERSION)
+PKG_VERSION:=$(BTF_KERNEL_VERSION)
 PKG_RELEASE:=1
 
 include $(INCLUDE_DIR)/package.mk
@@ -37,15 +46,19 @@ endef
 
 PAHOLE_JOBS := $(if $(filter -j%,$(PKG_JOBS)),$(patsubst -j%,%,$(filter -j%,$(PKG_JOBS))),1)
 
-KERNEL_MAJOR:=$(firstword $(subst ., ,$(LINUX_VERSION)))
-LINUX_TARBALL_URL:=https://cdn.kernel.org/pub/linux/kernel/v$(KERNEL_MAJOR).x/$(LINUX_SOURCE)
+# The SDK ships an extracted kernel but no dl/ tarball, so fetch vanilla source.
+KERNEL_MAJOR:=$(firstword $(subst ., ,$(BTF_KERNEL_VERSION)))
+BTF_LINUX_SOURCE:=linux-$(BTF_KERNEL_VERSION)$(if $(findstring -rc,$(BTF_KERNEL_VERSION)),.tar.gz,.tar.xz)
+LINUX_TARBALL_URL:=https://cdn.kernel.org/pub/linux/kernel/v$(KERNEL_MAJOR).x/$(BTF_LINUX_SOURCE)
+# KERNEL_MAKE_FLAGS 里的 KERNELRELEASE 来自 SDK 内核，覆盖时一并改
+BTF_KERNEL_MAKE_FLAGS =$(filter-out KERNELRELEASE=%,$(KERNEL_MAKE_FLAGS)) KERNELRELEASE=$(BTF_KERNEL_VERSION)
 
 define Build/Prepare
 	mkdir -p $(PKG_BUILD_DIR) $(DL_DIR)
-	[ -f "$(DL_DIR)/$(LINUX_SOURCE)" ] || \
-		wget -nv -O "$(DL_DIR)/$(LINUX_SOURCE)" "$(LINUX_TARBALL_URL)"
-	$(TAR) -C $(PKG_BUILD_DIR) -xf $(DL_DIR)/$(LINUX_SOURCE)
-	mv $(PKG_BUILD_DIR)/linux-$(LINUX_VERSION) $(PKG_BUILD_DIR)/shadow-kernel
+	[ -f "$(DL_DIR)/$(BTF_LINUX_SOURCE)" ] || \
+		wget -nv -O "$(DL_DIR)/$(BTF_LINUX_SOURCE)" "$(LINUX_TARBALL_URL)"
+	$(TAR) -C $(PKG_BUILD_DIR) -xf $(DL_DIR)/$(BTF_LINUX_SOURCE)
+	mv $(PKG_BUILD_DIR)/linux-$(BTF_KERNEL_VERSION) $(PKG_BUILD_DIR)/shadow-kernel
 	cp $(LINUX_DIR)/.config $(PKG_BUILD_DIR)/shadow-kernel/.config
 endef
 
@@ -88,12 +101,12 @@ define Build/Compile
 		--set-str INITRAMFS_SOURCE ""
 
 	$(MAKE) -C $(PKG_BUILD_DIR)/shadow-kernel \
-		$(KERNEL_MAKE_FLAGS) \
+		$(BTF_KERNEL_MAKE_FLAGS) \
 		KBUILD_HOSTLDFLAGS="$(KBUILD_HOSTLDFLAGS) -lz" \
 		olddefconfig
 
 	$(MAKE) -C $(PKG_BUILD_DIR)/shadow-kernel \
-		$(KERNEL_MAKE_FLAGS) \
+		$(BTF_KERNEL_MAKE_FLAGS) \
 		$(PKG_JOBS) \
 		KBUILD_HOSTLDFLAGS="-L$(STAGING_DIR_HOST)/lib -lz" \
 		vmlinux
@@ -111,7 +124,7 @@ endef
 define Package/vmlinux-btf/install
 	$(INSTALL_DIR) $(1)/usr/lib/debug/boot
 	$(INSTALL_DATA) $(PKG_BUILD_DIR)/vmlinux-btf $(1)/usr/lib/debug/boot/vmlinux
-	$(LN) vmlinux $(1)/usr/lib/debug/boot/vmlinux-$(LINUX_VERSION)
+	$(LN) vmlinux $(1)/usr/lib/debug/boot/vmlinux-$(BTF_KERNEL_VERSION)
 endef
 
 $(eval $(call BuildPackage,vmlinux-btf))
