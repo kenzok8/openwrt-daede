@@ -732,29 +732,11 @@ jobs:
     name: Publish validated candidate
     needs: bump
     if: (github.event_name == 'schedule' || inputs.promote) && needs.bump.outputs.changed == 'true' && vars.ENABLE_UNATTENDED_RELEASE == 'true'
-    runs-on: ubuntu-latest
-    permissions:
-      actions: write
-    steps:
-      # 自动晋升与手动晋升共用实现：dispatch promote-candidate.yml 并等待。
-      # promote-candidate.yml 用了独立的 concurrency group，
-      # 不会与本 run 的 auto-bump-dae-daed 组死锁；真正的互斥由
-      # promote-candidate.sh 的 pending.json 槽位保证。
-      - name: Dispatch candidate promotion
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          set -euo pipefail
-          # 这个 job 没有 checkout，gh 找不到 .git 就不知道该操作哪个仓库，
-          # 必须显式带 --repo，否则报 "not a git repository"。
-          url=$(gh workflow run promote-candidate.yml \
-            --repo "${{ github.repository }}" --ref main \
-            -f candidate_sha="${{ needs.bump.outputs.tested_sha }}")
-          echo "$url"
-          run_id=$(printf '%s\n' "$url" | sed -nE 's|.*/runs/([0-9]+).*|\1|p' | tail -1)
-          [[ "$run_id" =~ ^[0-9]+$ ]] || {
-            echo "::error::cannot read promote run ID from: $url"
-            exit 1
-          }
-          echo "promote run: $run_id"
-          gh run watch "$run_id" --repo "${{ github.repository }}" --exit-status
+    uses: ./.github/workflows/promote-candidate.yml
+    secrets: inherit
+    # 与手动 dispatch promote-candidate.yml 共用同一把锁：job 级 group 是跨 workflow 的全局标识。
+    concurrency:
+      group: promote-daede-candidate
+      cancel-in-progress: false
+    with:
+      candidate_sha: ${{ needs.bump.outputs.tested_sha }}

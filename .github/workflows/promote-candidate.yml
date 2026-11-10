@@ -7,22 +7,25 @@ on:
         description: Exact validated candidate SHA from the candidate run summary
         required: true
         type: string
+  workflow_call:
+    inputs:
+      candidate_sha:
+        description: Exact validated candidate SHA from the candidate run summary
+        required: true
+        type: string
 
 permissions:
   contents: write
   actions: read
 
-# 独立并发组：auto-bump 的 promote job 会 dispatch 本 workflow 并等待，
-# 若共用 auto-bump-dae-daed 组会死锁（等待中的 run 挡住被等待的 run）。
-# 真正的互斥由 promote-candidate.sh 的 pending.json 槽位保证。
-concurrency:
-  group: promote-daede-candidate
-  cancel-in-progress: false
-
 jobs:
   promote:
     name: Publish 252-verified candidate
     runs-on: ubuntu-latest
+    # 与 auto-bump 的 promote job 共用同一把锁，两个入口只能串行。
+    concurrency:
+      group: promote-daede-candidate
+      cancel-in-progress: false
     steps:
       - uses: actions/checkout@v7
         with:
@@ -111,6 +114,8 @@ jobs:
       - name: Promote exact candidate
         env:
           GH_TOKEN: ${{ github.token }}
+          # 聚合轮询用的是个人 token，60 秒一查一次聚合能吃掉近半额度。
+          AGGREGATE_POLL_INTERVAL: "300"
           BASE_SHA: ${{ steps.candidate.outputs.base_sha }}
           CANDIDATE_SHA: ${{ inputs.candidate_sha }}
           BUILD_RUN_ID: ${{ steps.candidate.outputs.build_run_id }}
