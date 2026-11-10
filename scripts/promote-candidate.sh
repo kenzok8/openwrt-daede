@@ -121,6 +121,11 @@ else
         fail "pending release state differs after upload"
 fi
 
+# 校验字节那几分钟里 main 可能被推进，旧 lease 必然被拒。
+remote_main_now=$(git ls-remote origin refs/heads/main | cut -f1)
+[[ "$remote_main_now" = "$remote_main" ]] || \
+    fail "main advanced to $remote_main_now while validating $CANDIDATE_SHA; rebuild the candidate"
+
 if [[ "$remote_main" = "$CANDIDATE_SHA" && -z "$remote_tag" && "$BASE_SHA" = "$CANDIDATE_SHA" ]]; then
     git config user.name "github-actions[bot]"
     git config user.email "41898282+github-actions[bot]@users.noreply.github.com"

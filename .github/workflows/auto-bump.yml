@@ -111,6 +111,16 @@ jobs:
           jq -e '.staging | test("^auto-bump-staging-[0-9]+-[0-9]+$")' "$RUNNER_TEMP/pending.json" >/dev/null
           jq -e '.build_run_id | type == "number"' "$RUNNER_TEMP/pending.json" >/dev/null
           jq -e '.manifest_sha256 | test("^[0-9a-f]{64}$")' "$RUNNER_TEMP/pending.json" >/dev/null
+          # main 离开 base/candidate 后这次发布续做不了，放弃它，否则每晚 resume 都卡死。
+          remote_main=$(git ls-remote "https://github.com/${GITHUB_REPOSITORY}" refs/heads/main | cut -f1)
+          [ -n "$remote_main" ] || { echo 'Cannot read remote main'; exit 1; }
+          base_sha=$(jq -r '.base_sha' "$RUNNER_TEMP/pending.json")
+          if [ "$remote_main" != "$sha" ] && [ "$remote_main" != "$base_sha" ]; then
+            echo "abandoning pending release $sha: main moved to $remote_main (recorded base $base_sha)"
+            rclone deletefile "$state/pending.json"
+            echo 'mode=new' >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
           stage="r2:${R2_INTERNAL_BUCKET}/daed-candidates/${sha}"
           mkdir -p publish
           rclone copy "$stage/" publish/ --fast-list
