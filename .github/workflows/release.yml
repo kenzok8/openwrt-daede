@@ -1,15 +1,53 @@
 name: Build candidate matrix
 
 # 纯构建矩阵，不发布。发布唯一入口是 promote-candidate.yml。
-# 必须用 --ref candidate/<SHA>（tag）触发，并传 sha 输入；
-# 构建 checkout 该 SHA，保证"验证的是哪个 SHA"可查。
+# gate 用 --ref candidate/<SHA> 触发并传 sha，保证构建发生在候选上；
+# 不传 sha 时退化成“在触发 ref 上单架构试编”，代替原 test-daed-build。
 on:
   workflow_dispatch:
     inputs:
       sha:
-        description: 'Candidate SHA to build and verify (must match the candidate tag)'
+        description: 'Candidate SHA to build and verify; empty = trigger ref (branch iteration)'
         type: string
-        required: true
+        required: false
+        default: ''
+      arch:
+        description: Architecture; all = release matrix
+        type: choice
+        required: false
+        default: all
+        options:
+          - all
+          - aarch64_cortex-a53
+          - aarch64_cortex-a72
+          - aarch64_generic
+          - arm_cortex-a7_neon-vfpv4
+          - arm_cortex-a9
+          - arm_cortex-a9_neon
+          - i386_pentium4
+          - x86_64
+      sdk:
+        description: SDK version; all = release matrix
+        type: choice
+        required: false
+        default: all
+        options:
+          - all
+          - "24.10"
+          - "25.12"
+      packages:
+        description: Space separated packages to require
+        type: string
+        required: false
+        default: dae daed luci-app-daede vmlinux-btf
+      golang_branch:
+        description: Golang feed branch (kenzok8/golang)
+        type: choice
+        required: false
+        default: "1.27"
+        options:
+          - "1.27"
+          - "1.26"
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
@@ -24,24 +62,13 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        arch:
-          - aarch64_cortex-a53
-          - aarch64_cortex-a72
-          - aarch64_generic
-          - arm_cortex-a7_neon-vfpv4
-          - arm_cortex-a9
-          - arm_cortex-a9_neon
-          - i386_pentium4
-          - x86_64
-        sdk:
-          - "24.10"
-          - "25.12"
+        arch: ${{ fromJSON(inputs.arch == 'all' && '["aarch64_cortex-a53","aarch64_cortex-a72","aarch64_generic","arm_cortex-a7_neon-vfpv4","arm_cortex-a9","arm_cortex-a9_neon","i386_pentium4","x86_64"]' || format('["{0}"]', inputs.arch)) }}
+        sdk: ${{ fromJSON(inputs.sdk == 'all' && '["24.10","25.12"]' || format('["{0}"]', inputs.sdk)) }}
 
     steps:
       - uses: actions/checkout@v7
         with:
-          # 构建必须发生在 candidate SHA 上，而不是触发 ref 的最新提交。
-          ref: ${{ inputs.sha }}
+          ref: ${{ inputs.sha != '' && inputs.sha || github.ref }}
 
       - name: Prepare SDK action with pahole
         uses: actions/checkout@v7
@@ -73,7 +100,7 @@ jobs:
           CONTAINER: immortalwrt/sdk
           ARCH: ${{ matrix.arch }}-openwrt-${{ matrix.sdk }}
           FEEDNAME: daede
-          PACKAGES: dae daed luci-app-daede vmlinux-btf
+          PACKAGES: ${{ inputs.packages }}
           # wall supplies v2ray-geoip / v2ray-geosite (subpackages of v2ray-geodata)
           EXTRA_FEEDS: src-git|wall|https://github.com/kenzok8/wall
           NO_REFRESH_CHECK: true
@@ -86,12 +113,13 @@ jobs:
           PRIVATE_KEY: ''
           # dae / daed go.mod requires Go 1.27; override SDK's bundled golang.
           GOLANG_REPO: https://github.com/kenzok8/golang
-          GOLANG_BRANCH: '1.27'
+          GOLANG_BRANCH: ${{ inputs.golang_branch }}
 
-      - name: Require all release packages
+      - name: Require requested packages
         if: always()
         env:
           SDK_OUTCOME: ${{ steps.sdk.outcome }}
+          PACKAGES: ${{ inputs.packages }}
         run: |
           set -euo pipefail
           [ "$SDK_OUTCOME" = success ] || {
@@ -99,7 +127,9 @@ jobs:
             exit 1
           }
           output_dir="bin/packages/${{ matrix.arch }}/daede"
-          for package in dae daed luci-app-daede vmlinux-btf; do
+          read -r -a requested <<< "$PACKAGES"
+          [ "${#requested[@]}" -gt 0 ] || { echo "::error::packages input is empty"; exit 1; }
+          for package in "${requested[@]}"; do
             found=0
             while IFS= read -r -d '' file; do
               name=${file##*/}
@@ -171,6 +201,8 @@ jobs:
   verify:
     name: Verify built packages
     needs: build
+    # 只在完整发布矩阵上跑硬校验；单架构迭代不跑（每目标那里已经 fail-closed）。
+    if: inputs.arch == 'all' && inputs.sdk == 'all'
     runs-on: ubuntu-latest
     steps:
       - name: Download artifacts
@@ -180,13 +212,16 @@ jobs:
           pattern: packages-*
 
       - name: Require all packages on supported targets
+        env:
+          PACKAGES: ${{ inputs.packages }}
         run: |
           set -eu
           fail=0
+          read -r -a requested <<< "$PACKAGES"
           for sdk in 24.10 25.12; do
             for arch in aarch64_cortex-a53 aarch64_cortex-a72 aarch64_generic arm_cortex-a7_neon-vfpv4 arm_cortex-a9 arm_cortex-a9_neon i386_pentium4 x86_64; do
               dir="artifacts/packages-sdk${sdk}-${arch}/feed"
-              for pkg in dae daed luci-app-daede vmlinux-btf; do
+              for pkg in "${requested[@]}"; do
                 if ls "$dir"/${pkg}_*.ipk >/dev/null 2>&1 || ls "$dir"/${pkg}-*.apk >/dev/null 2>&1; then
                   :
                 else

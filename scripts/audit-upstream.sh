@@ -245,10 +245,8 @@ printf 'BUILD: quic-go ./...\n'
 (cd "$quic_dir" && go build ./...)
 
 sdk_action_sha=44f98c51d04aebd1aa79fe4f603559c1ec2085da
-for workflow in release.yml test-daed-build.yml; do
-    grep -Fq "ref: $sdk_action_sha" "$repo/.github/workflows/$workflow" || \
-        fail "$workflow does not use the audited SDK action"
-done
+grep -Fq "ref: $sdk_action_sha" "$repo/.github/workflows/release.yml" || \
+    fail "release.yml does not use the audited SDK action"
 sdk_action_dir="$audit_tmp/gh-action-sdk"
 printf 'FETCH: gh-action-sdk %s\n' "$sdk_action_sha"
 fetch_exact https://github.com/kenzok8/gh-action-sdk "$sdk_action_sha" "$sdk_action_dir"
