@@ -1,7 +1,7 @@
 name: Sync and release dae/daed
 
 # Scheduled runs build and promote a fully validated candidate.
-# Manual runs stop after candidate validation for router testing.
+# Manual runs stop after candidate validation unless promote=true.
 
 on:
   schedule:
@@ -18,6 +18,11 @@ on:
           - current
           - core
           - perf
+      promote:
+        description: Publish the validated candidate instead of stopping after the gate
+        required: false
+        default: false
+        type: boolean
 
 permissions:
   contents: write
@@ -726,7 +731,7 @@ jobs:
   promote:
     name: Publish validated candidate
     needs: bump
-    if: github.event_name == 'schedule' && needs.bump.outputs.changed == 'true' && vars.ENABLE_UNATTENDED_RELEASE == 'true'
+    if: (github.event_name == 'schedule' || inputs.promote) && needs.bump.outputs.changed == 'true' && vars.ENABLE_UNATTENDED_RELEASE == 'true'
     runs-on: ubuntu-latest
     permissions:
       actions: write
