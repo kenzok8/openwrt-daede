@@ -73,7 +73,7 @@ jobs:
           export RCLONE_CONFIG="$temp/rclone.conf"
           rclone cat "r2:${R2_INTERNAL_BUCKET}/daed-candidates/${CANDIDATE_SHA}/verification.json" > "$temp/verification.json"
           jq -e --arg sha "$CANDIDATE_SHA" '
-            .schema_version == 2 and .candidate_sha == $sha and
+            .schema_version == 3 and .candidate_sha == $sha and
             (.kind == "main" or .kind == "upstream") and
             (.base_sha | test("^[0-9a-f]{40}$")) and
             (.staging | test("^auto-bump-staging-[0-9]+-[0-9]+$")) and

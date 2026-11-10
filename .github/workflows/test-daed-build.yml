@@ -2,8 +2,7 @@ name: Test daed build
 
 # Iteration-only: builds dae/daed for release targets and uploads package artifacts.
 # No feed upload, no release — safe to run on feature branches.
-# Gate 用法：必须用 --ref candidate/<SHA>（tag）触发，并传 sha 输入，
-# 构建 checkout 该 SHA，保证"验证的是哪个 SHA"可查。
+# 发布 gate 不再调用它（矩阵已覆盖同样目标），只用于单架构迭代。
 
 on:
   workflow_dispatch:

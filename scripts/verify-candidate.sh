@@ -66,7 +66,7 @@ rclone cat "r2:${R2_INTERNAL_BUCKET}/daed-candidates/${CANDIDATE_SHA}/verificati
 python3 - "$workdir/verification.json" <<'PYEOF' > "$workdir/checks.tsv"
 import json, sys
 record = json.load(open(sys.argv[1]))
-assert record.get("schema_version") == 2, "unsupported verification schema"
+assert record.get("schema_version") == 3, "unsupported verification schema"
 kind = record["kind"]
 assert kind in ("main", "upstream"), "invalid candidate kind"
 assert record["candidate_sha"], "verification.json: missing candidate_sha"
@@ -80,7 +80,6 @@ jobs = {
     "assemble-dae":  (".github/workflows/assemble-dae-src.yml", "assemble"),
     "assemble-daed": (".github/workflows/assemble-daed-src.yml", "assemble"),
     "audit":         (".github/workflows/audit-upstream.yml", "Audit upstream pins"),
-    "smoke":         (".github/workflows/test-daed-build.yml", "build"),
     "matrix":        (".github/workflows/release.yml", "Verify built packages"),
 }
 seen = set()
@@ -97,7 +96,7 @@ for v in record["verifications"]:
         wf = ".github/workflows/" + wf
     assert wf == path, f"{step}: workflow mismatch: {v['workflow']}"
     print(f"{step}\t{v['run_id']}\t{v['attempt']}\t{v['head_sha']}\t{job}\t{path}")
-expected = set(jobs) if kind == "upstream" else {"audit", "smoke", "matrix"}
+expected = set(jobs) if kind == "upstream" else {"audit", "matrix"}
 assert seen == expected, f"verification steps differ: missing={expected - seen} extra={seen - expected}"
 PYEOF
 
@@ -167,7 +166,6 @@ while IFS=$'\t' read -r step run_id attempt head_sha job_name expected_path; do
     # 旧 attempt 对同一 SHA 的证明（job 级按记录的 attempt 查）。
 
     # job 级核对：该 attempt 里对应 job 必须 success
-    # job 名用前缀匹配：smoke 的 job 名带矩阵参数（如 "build (x86_64, 25.12)"）。
     # 各 workflow 的 job 数都小于一页（≤30），不需要 --paginate。
     jobs_json=$(gh api "repos/${REPO}/actions/runs/${run_id}/attempts/${attempt}/jobs") \
         || fail "$step: cannot read jobs for run $run_id attempt $attempt"
@@ -182,7 +180,7 @@ print(matches[0] if matches and matches[0] else "missing")
         fail "$step: job '$job_name' concluded $job_conc (run $run_id attempt $attempt)"
 
     # SHA 绑定
-    if [[ "$step" == audit || "$step" == smoke || "$step" == matrix ]]; then
+    if [[ "$step" == audit || "$step" == matrix ]]; then
         [[ "$head_sha" == "$CANDIDATE_SHA" ]] || \
             fail "$step verified $head_sha, not candidate $CANDIDATE_SHA"
     else

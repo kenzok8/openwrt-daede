@@ -568,11 +568,6 @@ jobs:
           run_and_wait "$candidate_tag" audit-upstream.yml "$tested_sha" -f sha="$tested_sha"
           AUDIT_RUN_ID=$LAST_RUN_ID
           AUDIT_ATTEMPT=$LAST_RUN_ATTEMPT
-          # A single real SDK build catches wing/core compile errors before the
-          # full matrix. The test workflow also checks for both package files.
-          run_and_wait "$candidate_tag" test-daed-build.yml "$tested_sha" -f sha="$tested_sha" -f packages="dae daed" -f arch=x86_64 -f sdk=25.12
-          SMOKE_RUN_ID=$LAST_RUN_ID
-          SMOKE_ATTEMPT=$LAST_RUN_ATTEMPT
           # Build the exact four-package release matrix without publishing.
           run_and_wait "$candidate_tag" release.yml "$tested_sha" -f sha="$tested_sha"
           gate_run_id=$LAST_RUN_ID
@@ -585,7 +580,7 @@ jobs:
           export LANE BASE_SHA STAGING
           export ASSEMBLE_DAE_RUN_ID ASSEMBLE_DAE_ATTEMPT ASSEMBLE_DAE_HEAD_SHA
           export ASSEMBLE_DAED_RUN_ID ASSEMBLE_DAED_ATTEMPT ASSEMBLE_DAED_HEAD_SHA
-          export AUDIT_RUN_ID AUDIT_ATTEMPT SMOKE_RUN_ID SMOKE_ATTEMPT
+          export AUDIT_RUN_ID AUDIT_ATTEMPT
           export MATRIX_RUN_ID MATRIX_ATTEMPT
           python3 <<'PYEOF' > verification.json
           import json, os
@@ -596,7 +591,7 @@ jobs:
                       "head_sha": os.environ[head],
                       "conclusion": "success"}
           record = {
-              "schema_version": 2,
+              "schema_version": 3,
               "kind": "main" if os.environ["LANE"] == "current" else "upstream",
               "candidate_sha": os.environ["CANDIDATE_SHA"],
               "base_sha": os.environ["BASE_SHA"],
@@ -613,8 +608,6 @@ jobs:
               ] if os.environ["LANE"] != "current" else []) + [
                   v("audit", ".github/workflows/audit-upstream.yml",
                     "AUDIT_RUN_ID", "AUDIT_ATTEMPT", "CANDIDATE_SHA"),
-                  v("smoke", ".github/workflows/test-daed-build.yml",
-                    "SMOKE_RUN_ID", "SMOKE_ATTEMPT", "CANDIDATE_SHA"),
                   v("matrix", ".github/workflows/release.yml",
                     "MATRIX_RUN_ID", "MATRIX_ATTEMPT", "CANDIDATE_SHA"),
               ],
