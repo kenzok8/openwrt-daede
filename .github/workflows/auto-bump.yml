@@ -614,9 +614,5 @@ jobs:
     if: (github.event_name == 'schedule' || inputs.promote) && needs.bump.outputs.changed == 'true' && vars.ENABLE_UNATTENDED_RELEASE == 'true'
     uses: ./.github/workflows/promote-candidate.yml
     secrets: inherit
-    # 与手动 dispatch promote-candidate.yml 共用同一把锁：job 级 group 是跨 workflow 的全局标识。
-    concurrency:
-      group: promote-daede-candidate
-      cancel-in-progress: false
     with:
       candidate_sha: ${{ needs.bump.outputs.tested_sha }}
