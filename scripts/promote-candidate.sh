@@ -98,28 +98,6 @@ for candidate in publish/feed/*/*/luci-app-daede*.apk publish/feed/*/*/luci-app-
 done
 
 state="r2:${R2_INTERNAL_BUCKET}/daed-release-state"
-pending="$state/pending.json"
-manifest_digest=$(sha256sum publish/manifest.json | cut -d' ' -f1)
-jq -n --arg sha "$CANDIDATE_SHA" --arg base "$BASE_SHA" \
-    --arg staging "$STAGING" --arg tag "$tag" \
-    --arg digest "$manifest_digest" --argjson run "$BUILD_RUN_ID" \
-    '{candidate_sha:$sha,base_sha:$base,staging:$staging,tag:$tag,build_run_id:$run,manifest_sha256:$digest}' \
-    > "$rclone_dir/pending.json"
-if rclone lsf "$state/" --files-only > "$rclone_dir/state-listing" 2>/dev/null; then
-    state_listing=$(cat "$rclone_dir/state-listing")
-else
-    fail "cannot list release state in R2"
-fi
-if printf '%s\n' "$state_listing" | grep -Fxq pending.json; then
-    rclone cat "$pending" > "$rclone_dir/existing-pending.json"
-    cmp -s "$rclone_dir/pending.json" "$rclone_dir/existing-pending.json" || \
-        fail "another release is pending"
-else
-    rclone copyto "$rclone_dir/pending.json" "$pending" --immutable
-    rclone cat "$pending" > "$rclone_dir/existing-pending.json"
-    cmp -s "$rclone_dir/pending.json" "$rclone_dir/existing-pending.json" || \
-        fail "pending release state differs after upload"
-fi
 
 # 校验字节那几分钟里 main 可能被推进，旧 lease 必然被拒。
 remote_main_now=$(git ls-remote origin refs/heads/main | cut -f1)
@@ -560,7 +538,7 @@ if printf '%s\n' "$state_listing" | grep -Fxq aggregate.json; then
             aggregate_discard_intent
         fi
     else
-        # pending.json 槽位已保证没有并发发布，这里只可能是上次放弃的残留。
+        # promote 锁保证没有并发发布，这里只可能是上次放弃的残留。
         echo "=== [aggregate] discarding stale aggregate state ===" >&2
         rclone deletefile "$aggregate_state" || fail "cannot delete stale aggregate state"
         # 同一批残留里可能还有别的候选留下的意图记录，留着会挡住新的派发。
@@ -621,12 +599,15 @@ if [ "$(git ls-remote origin "refs/heads/${STAGING}" | cut -f1)" = "$CANDIDATE_S
 else
     echo "staging branch ${STAGING} no longer points at ${CANDIDATE_SHA}; leaving it"
 fi
-# --checksum：promote 中断后重跑时文件已存在但内容相同，按内容比对可幂等。
-rclone copyto "$rclone_dir/pending.json" "$state/completed/${CANDIDATE_SHA}.json" --immutable --checksum
-rclone cat "$state/completed/${CANDIDATE_SHA}.json" > "$rclone_dir/completed.json"
-cmp -s "$rclone_dir/pending.json" "$rclone_dir/completed.json" || fail "completion state differs"
-# 聚合状态残留会挡住下一个候选；清理完再释放 pending 槽位。
+# 完成记录只用于 prune 判断哪些候选已发布，不再做断点续跑。
+jq -n --arg sha "$CANDIDATE_SHA" --arg base "$BASE_SHA" --arg tag "$tag" \
+    --argjson run "$BUILD_RUN_ID" \
+    '{candidate_sha:$sha,base_sha:$base,tag:$tag,build_run_id:$run}' \
+    > "$rclone_dir/completed.json"
+rclone copyto "$rclone_dir/completed.json" "$state/completed/${CANDIDATE_SHA}.json" --immutable --checksum
+rclone cat "$state/completed/${CANDIDATE_SHA}.json" | cmp -s - "$rclone_dir/completed.json" || \
+    fail "completion state differs"
+# 聚合状态残留会挡住下一个候选。
 aggregate_cleanup_state
 prune_candidate_staging
-rclone deletefile "$pending"
 printf 'promoted %s from build %s\n' "$tag" "$BUILD_RUN_ID"
