@@ -48,7 +48,11 @@ on:
         options:
           - "1.27"
           - "1.26"
-
+      btf_kernel_version:
+        description: 目标内核版本号（仅 SDK 24.10 生效，例如 6.6.104）；留空则用 SDK 自带内核
+        type: string
+        required: false
+        default: ""
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
@@ -80,6 +84,17 @@ jobs:
 
       - name: Add pahole to SDK image
         run: git -C .github/actions/gh-action-sdk apply "$GITHUB_WORKSPACE/.github/patches/gh-action-sdk-pahole.patch"
+
+      # SDK 的 24.10 容器内核走在固件前面（6.6.151 vs 24.10.3 的 6.6.104），
+      # 直接拿 SDK 内核出 BTF 会和目标固件对不上，所以允许单独钉死影子内核版本。
+      - name: Pin vmlinux-btf kernel version
+        if: matrix.sdk == '24.10' && inputs.btf_kernel_version != ''
+        env:
+          PINNED_KERNEL: ${{ inputs.btf_kernel_version }}
+        run: |
+          set -euo pipefail
+          sed -i "s|^BTF_KERNEL_VERSION?=.*|BTF_KERNEL_VERSION?=${PINNED_KERNEL}|" vmlinux-btf/Makefile
+          grep -n '^BTF_KERNEL_VERSION' vmlinux-btf/Makefile
 
       # Heavy dae/daed + Go toolchain builds can exhaust the runner's ~14GB.
       # Drop preinstalled toolchains we never use to reclaim ~25GB and avoid
