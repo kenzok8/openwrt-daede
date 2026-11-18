@@ -1,0 +1,80 @@
+diff --git a/control/tcp_relay_capabilities.go b/control/tcp_relay_capabilities.go
+--- a/control/tcp_relay_capabilities.go
++++ b/control/tcp_relay_capabilities.go
+@@ -50,38 +50,25 @@
+ 
+ const relayConnChainMaxDepth = 8
+ 
+-// unwrapRelayTCPConn resolves transparent wrappers down to a concrete TCP
+-// socket. Generic wrapper traversal is delegated to outbound/netproxy's
+-// UnwrapTCPConn so dae stays aligned with wrapper capabilities added there,
+-// while prefixedConn remains a dae-local relay wrapper that must be peeled
+-// explicitly.
+-//
+-// Iterative implementation reduces function call overhead and improves CPU
+-// branch prediction compared to the previous recursive approach.
++// unwrapRelayTCPConn peels only relay wrappers whose bytes can be copied
++// directly after the buffered prefix has been forwarded.
+ func unwrapRelayTCPConn(conn any) (*net.TCPConn, bool) {
+ 	for range relayConnChainMaxDepth {
+-		if conn == nil {
+-			return nil, false
+-		}
+-
+ 		switch c := conn.(type) {
+ 		case *net.TCPConn:
+-			return c, true
++			return c, c != nil
+ 		case *prefixedConn:
+ 			conn = c.Conn
++		case *bufioConn:
++			conn = c.Conn
+ 		case *sniffing.ConnSniffer:
+-			// ConnSniffer now supports UnwrapTCPConn for splice after sniffing.
+-			if tcpConn, ok := c.UnwrapTCPConn(); ok {
+-				return tcpConn, true
+-			}
+ 			conn = c.Conn
+-		case netproxy.UnderlyingConnProvider:
+-			if tcpConn, ok := netproxy.UnwrapTCPConn(c); ok {
+-				return tcpConn, true
+-			}
+-			conn = c.UnderlyingConn()
++		case *netproxy.FakeNetConn:
++			conn = c.Conn
+ 		default:
+-			return netproxy.UnwrapTCPConn(conn)
++			// A protocol wrapper may expose a socket for inspection while
++			// still requiring its own Read, Write and CloseWrite methods.
++			return nil, false
+ 		}
+ 	}
+ 	return nil, false
+diff --git a/control/frozen_ad_regression_test.go b/control/frozen_ad_regression_test.go
+--- a/control/frozen_ad_regression_test.go
++++ b/control/frozen_ad_regression_test.go
+@@ -128,6 +128,24 @@
+ 	}
+ }
+ 
++type relayProtocolConn struct {
++	net.Conn
++}
++
++func (c *relayProtocolConn) UnderlyingConn() net.Conn {
++	return c.Conn
++}
++
++func TestUnwrapRelayTCPConnStopsAtProtocolWrapper(t *testing.T) {
++	socket := new(net.TCPConn)
++	wrapped := &relayProtocolConn{Conn: socket}
++	for _, conn := range []net.Conn{wrapped, &prefixedConn{Conn: wrapped}, &bufioConn{Conn: wrapped}} {
++		if tcp, ok := unwrapRelayTCPConn(conn); tcp != nil || ok {
++			t.Fatalf("unwrapRelayTCPConn(%T) = (%v, %v), want no raw socket", conn, tcp, ok)
++		}
++	}
++}
++
+ func TestCloseWriteRelayConnUnwrapsBufioConn(t *testing.T) {
+ 	ln, err := net.Listen("tcp", "127.0.0.1:0")
+ 	if err != nil {

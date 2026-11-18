@@ -100,6 +100,7 @@ patch_dirs=(
     dae/patches_arm
     daed/patches
     daed/patches_arm
+    ci/patches/dae-core
     ci/patches/daed-web
     ci/patches/outbound
     ci/patches/quic-go
@@ -172,6 +173,8 @@ download_source() {
 dae_source=$(download_source dae)
 [[ -d "$dae_source/core" ]] || fail "missing assembled dae core: $dae_source/core"
 cp -a "$dae_source" "$audit_tmp/dae-arm"
+apply_tree_patches "$dae_source/core" ci/patches/dae-core
+apply_tree_patches "$audit_tmp/dae-arm/core" ci/patches/dae-core no_count
 apply_tree_patches "$dae_source/core" dae/patches
 apply_tree_patches "$audit_tmp/dae-arm/core" dae/patches_arm
 
@@ -184,6 +187,8 @@ for patch_file in "$repo"/ci/patches/daed-web/*.patch; do
     printf 'EMBEDDED: %s\n' "${patch_file#"$repo"/}"
 done
 cp -a "$daed_source" "$audit_tmp/daed-arm"
+apply_tree_patches "$daed_source/wing/dae-core" ci/patches/dae-core no_count
+apply_tree_patches "$audit_tmp/daed-arm/wing/dae-core" ci/patches/dae-core no_count
 apply_tree_patches "$daed_source/wing" daed/patches
 apply_tree_patches "$audit_tmp/daed-arm/wing" daed/patches no_count
 apply_tree_patches "$audit_tmp/daed-arm/wing" daed/patches_arm

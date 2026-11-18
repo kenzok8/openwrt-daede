@@ -1,4 +1,5 @@
 .github/patches/gh-action-sdk-pahole.patch
+ci/patches/dae-core/0001-keep-protocol-wrappers-in-tcp-relay.patch
 ci/patches/daed-web/0001-keep-setup-outside-keyed-query-provider.patch
 ci/patches/outbound/0002-reality-client-version.patch
 ci/patches/outbound/0003-anytls-honor-insecure-aliases.patch
