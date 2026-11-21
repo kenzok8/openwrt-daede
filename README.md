@@ -66,7 +66,7 @@
    - **QUIC**：基线 + 我们自持的性能补丁（`ci/patches/quic-go/`，B-tree 节点池优化），复现的 perf tip **
    - **出站**：`outbound` 仍用 olicesx 的优化分支（anytls/sticky-ip 等，分叉较大暂骑上游）
    - **PGO**（Profile-Guided Optimization）：内置 `ci/default.pgo` 采样档，`-pgo=auto` 让编译器按真实热点优化
-   - **Go 1.26** + `GOEXPERIMENT=newinliner,simd`（新内联器 + SIMD），静态链接、`-trimpath`
+   - **Go 1.27** + `GOEXPERIMENT=newinliner,simd`（新内联器 + SIMD），静态链接、`-trimpath`
 
 2. **可复现构建**
    - 所有上游 commit 锁定在 `ci/pins.env`（单一事实来源）
