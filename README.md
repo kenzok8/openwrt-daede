@@ -144,6 +144,7 @@ wget -qO- https://down.dllkids.xyz/openwrt-feed/openwrt-feed-setup.sh | sh
 | 包名 | 说明 |
 | :--- | :--- |
 | `ca-bundle` | CA 证书包（订阅拉取、面板 HTTPS 校验） |
+| `curl` | 下载工具（地理数据更新、代理连通性检查） |
 | `kmod-sched-core` / `kmod-sched-bpf` | eBPF 流量调度（内核态分流挂载点） |
 | `kmod-veth` | 虚拟以太网设备（dae0 数据面） |
 | `v2ray-geoip` / `v2ray-geosite` | 路由 GeoIP / GeoSite 数据；安装脚本会从软件源下载 |

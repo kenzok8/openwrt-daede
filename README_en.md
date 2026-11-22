@@ -144,6 +144,7 @@ The public feed setup script retries with `--allow-untrusted` when `apk update` 
 | Package | Description |
 | :--- | :--- |
 | `ca-bundle` | CA certificate bundle (subscription fetches, dashboard HTTPS checks) |
+| `curl` | Download tool (Geo data updates, proxy connectivity checks) |
 | `kmod-sched-core` / `kmod-sched-bpf` | eBPF traffic scheduling (kernel-space split mount points) |
 | `kmod-veth` | Virtual Ethernet devices (the dae0 dataplane) |
 | `v2ray-geoip` / `v2ray-geosite` | GeoIP / GeoSite routing data; the install script downloads them from the feed |
