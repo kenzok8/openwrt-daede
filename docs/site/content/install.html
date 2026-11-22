@@ -40,8 +40,9 @@ opkg update &amp;&amp; opkg upgrade luci-app-daede dae daed   # 24.10</code></pr
   <tr><td><code>ca-bundle</code></td><td>CA 证书</td></tr>
   <tr><td><code>kmod-sched-core</code> / <code>kmod-sched-bpf</code></td><td>eBPF 调度与流量分类</td></tr>
   <tr><td><code>kmod-veth</code></td><td>虚拟以太网设备</td></tr>
-  <tr><td><code>kmod-xdp-sockets-diag</code></td><td>XDP socket 诊断</td></tr>
-  <tr><td><code>kmod-nft-tproxy</code></td><td>nftables TPROXY</td></tr>
+  <tr><td><code>v2ray-geoip</code> / <code>v2ray-geosite</code></td><td>路由 GeoIP / GeoSite 数据；安装脚本会从软件源下载</td></tr>
+  <tr><td><code>vmlinux-btf</code></td><td>可选：内核无内置 BTF 时补 BTF（Makefile 选项，默认用内核 BTF）</td></tr>
+  <tr><td><code>luci-base</code></td><td>LuCI 运行依赖</td></tr>
 </table>
 
 <p>dae / daed 二进制由 <code>luci-app-daede</code> 的 Makefile 自动拉对应后端包，不用手动装。</p>

@@ -15,7 +15,7 @@
 <h2 id="fix">两条补救路</h2>
 
 <ol>
-  <li>装匹配内核的 <b><a href="https://github.com/kenzok8/vmlinux-btf">vmlinux-btf</a></b> 包 —— 一键安装脚本会自动检测并拉匹配你内核 + 架构的包，也可以手动下</li>
+  <li>装匹配内核的 <b><a href="https://github.com/kenzok8/vmlinux-btf">vmlinux-btf</a></b> 包 —— 一键安装脚本会从软件源顺带下载对应架构的包一并安装（取源内列表首个，不按 <code>uname -r</code> 精确匹配），也可以手动下</li>
   <li>换一份开了 BTF 的固件 —— 用 <a href="https://github.com/kenzok8/imagebuilder">kenzok8/imagebuilder</a> 在线生成，内核默认已开</li>
 </ol>
 
